@@ -250,14 +250,14 @@ const Navbar = () => {
                 )}
 
                 <Link
-                  href="/signin"
+                  href="/auth/signin"
                   className="text-sm font-medium text-[#8B7CFF] transition-colors hover:text-white"
                 >
                   Sign In
                 </Link>
 
                 <Link
-                  href="/register"
+                  href="/auth/register"
                   className="rounded-xl bg-linear-to-r from-[#7C5CFF] to-[#5B7CFF] px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-violet-500/25 transition hover:scale-[1.02] hover:shadow-violet-500/40"
                 >
                   Get Started
@@ -361,14 +361,14 @@ const Navbar = () => {
                 )}
 
                 <Link
-                  href="/signin"
+                  href="/auth/signin"
                   className="rounded-xl px-4 py-3 text-sm font-medium text-[#8B7CFF] transition hover:bg-white/5 hover:text-white"
                 >
                   Sign In
                 </Link>
 
                 <Link
-                  href="/register"
+                  href="/auth/register"
                   className="rounded-xl bg-linear-to-r from-[#7C5CFF] to-[#5B7CFF] px-5 py-3 text-center text-sm font-semibold text-white shadow-lg shadow-violet-500/25 transition hover:scale-[1.01]"
                 >
                   Get Started
