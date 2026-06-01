@@ -120,7 +120,7 @@ const SignUpPage = () => {
       setFormData(initialFormData);
 
       setTimeout(() => {
-        router.push("/signin");
+        router.push("/auth/signin");
       }, 900);
     } catch (error) {
       toast.error(error?.message || "Something went wrong.");
@@ -184,7 +184,7 @@ const SignUpPage = () => {
             <p className="mt-2 text-sm text-white/45">
               Already have an account?{" "}
               <Link
-                href="/signin"
+                href="/auth/signin"
                 className="font-medium text-violet-300 transition hover:text-violet-200"
               >
                 Sign in

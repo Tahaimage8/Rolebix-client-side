@@ -88,7 +88,7 @@ const Navbar = () => {
           onSuccess: () => {
             setSession(null);
             setIsDropdownOpen(false);
-            window.location.href = "/signin";
+            window.location.href = "/auth/signin";
           },
         },
       });
