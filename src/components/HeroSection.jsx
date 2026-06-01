@@ -10,7 +10,7 @@ import {
   FiZap,
   FiArrowRight,
 } from "react-icons/fi";
-// import SearchHeroC from "./SearchHeroC";
+import SearchHeroC from "./SearchHeroC";
 
 const trendingKeywords = [
   "Product Designer",
@@ -75,7 +75,7 @@ const HeroSection = () => {
         {/* Search + Visual Area */}
         <div className="relative mx-auto mt-12 max-w-6xl">
           {/* Search Component */}
-          {/* <SearchHeroC /> */}
+          <SearchHeroC />
 
           {/* Visual Card */}
           <div className="relative -mt-7 overflow-hidden rounded-[32px] border border-white/10 bg-[#030303] shadow-2xl shadow-black/60">
