@@ -59,7 +59,7 @@ const RecentApplicationsTable = ({ applications = defaultApplications }) => {
         <Table.ScrollContainer>
           <Table.Content aria-label="Recent applications table">
             <Table.Header>
-              <Table.Column>Candidate Name</Table.Column>
+              <Table.Column isRowHeader>Candidate Name</Table.Column>
               <Table.Column>Role</Table.Column>
               <Table.Column>Date Applied</Table.Column>
               <Table.Column>Experience</Table.Column>
@@ -83,7 +83,9 @@ const RecentApplicationsTable = ({ applications = defaultApplications }) => {
                   </Table.Cell>
 
                   <Table.Cell>{application.role}</Table.Cell>
+
                   <Table.Cell>{application.dateApplied}</Table.Cell>
+
                   <Table.Cell>{application.experience}</Table.Cell>
 
                   <Table.Cell>
