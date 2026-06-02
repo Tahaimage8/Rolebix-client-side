@@ -56,14 +56,10 @@ const DashboardSideBar = () => {
   useEffect(() => {
     const getSessionData = async () => {
       try {
-        const { data, error } = await authClient.getSession({
-          query: {
-            disableCookieCache: true,
-          },
-        });
+        const { data, error } = await authClient.getSession();
 
-        console.log("SIDEBAR SESSION DATA:", data);
-        console.log("SIDEBAR SESSION ERROR:", error);
+        // console.log("SIDEBAR SESSION DATA:", data);
+        // console.log("SIDEBAR SESSION ERROR:", error);
 
         if (error) {
           setUser(null);

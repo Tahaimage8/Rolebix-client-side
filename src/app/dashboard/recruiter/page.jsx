@@ -1,11 +1,53 @@
-import React from 'react';
+"use client";
+
+import StatCard from "@/components/dashboard/StatCard";
+import { useSession } from "@/lib/auth-client";
+import { Spinner } from "@heroui/react";
+import { FiFileText, FiUsers, FiZap, FiCheckCircle } from "react-icons/fi";
 
 const RecruiterDashboardHomePage = () => {
+  const { data: session, isPending } = useSession();
+
+  if (isPending) {
     return (
-        <div>
-            Im recruiter 
-        </div>
+      <div>
+        <Spinner size="xl" />
+      </div>
     );
+  }
+
+  const data = session?.user;
+
+  const statsData = [
+    {
+      title: "Total Job Posts",
+      value: "48",
+      icon: FiFileText,
+    },
+    {
+      title: "Total Applicants",
+      value: "1,284",
+      icon: FiUsers,
+    },
+    {
+      title: "Active Jobs",
+      value: "18",
+      icon: FiZap,
+    },
+    {
+      title: "Jobs Closed",
+      value: "32",
+      icon: FiCheckCircle,
+    },
+  ];
+
+  return (
+    <div className="p-8">
+      <h1 className="text-2xl font-bold">Welcome back, {data?.name}</h1>
+
+      <StatCard statsData={statsData} />
+    </div>
+  );
 };
 
 export default RecruiterDashboardHomePage;
