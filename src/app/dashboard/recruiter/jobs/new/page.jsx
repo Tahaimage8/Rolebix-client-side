@@ -25,6 +25,9 @@ import {
   FiSave,
   FiSend,
 } from "react-icons/fi";
+import { createJob } from "@/lib/actions/jobs";
+import { toast } from "react-toastify";
+import { redirect, useRouter } from "next/navigation";
 
 /* Job category options */
 const jobCategories = [
@@ -306,10 +309,10 @@ const PostJobPage = () => {
     console.log("SAVE DRAFT PAYLOAD:", payload);
 
     setSuccessMessage(
-      "Job draft saved locally. API integration can be added later."
+      "Job draft saved locally. API integration can be added later.",
     );
   };
-
+  const router = useRouter();
   /* Publish job */
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -321,20 +324,27 @@ const PostJobPage = () => {
 
       const payload = buildJobPayload("active");
 
-      console.log("POST JOB PAYLOAD:", payload);
+      const res = await createJob(payload);
 
-      // Future API call:
-      // await fetch("/api/jobs", {
-      //   method: "POST",
-      //   headers: {
-      //     "Content-Type": "application/json",
-      //   },
-      //   body: JSON.stringify(payload),
-      // });
+      // console.log(payload)
 
-      setSuccessMessage("Job posted successfully and is now publicly visible.");
-      setFormData(initialFormData);
+      if (res.insertedId) {
+        toast.success("Job posted successfully.");
+        setSuccessMessage(
+          "Job posted successfully and is now publicly visible.",
+        );
+        setFormData(initialFormData);
+        router.push("/dashboard/recruiter");
+        return;
+      }
+
+      toast.error(res?.message || "Failed to post job. Please try again.");
+      setErrors({
+        submit: res?.message || "Failed to post job. Please try again.",
+      });
     } catch (error) {
+      toast.error(error?.message || "Something went wrong. Please try again.");
+
       setErrors({
         submit: error?.message || "Something went wrong. Please try again.",
       });
