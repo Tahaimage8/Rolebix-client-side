@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Button,
   Description,
@@ -20,19 +20,41 @@ import {
   FiBriefcase,
   FiCalendar,
   FiCheckCircle,
+  FiEye,
   FiMapPin,
+  FiSave,
   FiSend,
 } from "react-icons/fi";
 
+/* Job category options */
 const jobCategories = [
   { id: "design", label: "Design" },
   { id: "development", label: "Development" },
+  { id: "software-engineering", label: "Software Engineering" },
+  { id: "web-development", label: "Web Development" },
+  { id: "mobile-development", label: "Mobile Development" },
+  { id: "data-science", label: "Data Science" },
+  { id: "ai-ml", label: "AI / Machine Learning" },
+  { id: "devops", label: "DevOps / Cloud" },
+  { id: "cybersecurity", label: "Cybersecurity" },
+  { id: "product-management", label: "Product Management" },
+  { id: "project-management", label: "Project Management" },
   { id: "marketing", label: "Marketing" },
+  { id: "digital-marketing", label: "Digital Marketing" },
   { id: "sales", label: "Sales" },
   { id: "customer-support", label: "Customer Support" },
+  { id: "operations", label: "Operations" },
+  { id: "human-resources", label: "Human Resources" },
+  { id: "finance", label: "Finance / Accounting" },
+  { id: "content-writing", label: "Content Writing" },
+  { id: "video-editing", label: "Video Editing" },
+  { id: "education", label: "Education / Training" },
+  { id: "healthcare", label: "Healthcare" },
+  { id: "legal", label: "Legal" },
   { id: "management", label: "Management" },
 ];
 
+/* Job type options */
 const jobTypes = [
   { id: "full-time", label: "Full-time" },
   { id: "part-time", label: "Part-time" },
@@ -40,6 +62,15 @@ const jobTypes = [
   { id: "internship", label: "Internship" },
 ];
 
+/* Experience level options */
+const experienceLevels = [
+  { id: "entry", label: "Entry Level" },
+  { id: "mid", label: "Mid Level" },
+  { id: "senior", label: "Senior Level" },
+  { id: "lead", label: "Lead / Manager" },
+];
+
+/* Currency options */
 const currencies = [
   { id: "USD", label: "USD" },
   { id: "BDT", label: "BDT" },
@@ -47,16 +78,20 @@ const currencies = [
   { id: "GBP", label: "GBP" },
 ];
 
+/* Temporary recruiter company data */
 const recruiterCompany = {
   id: "company_001",
   name: "Rolebix Technologies",
   status: "approved",
 };
 
+/* Initial form values */
 const initialFormData = {
   title: "",
   category: "",
   type: "",
+  experienceLevel: "",
+  skills: "",
   salaryMin: "",
   salaryMax: "",
   currency: "USD",
@@ -69,14 +104,62 @@ const initialFormData = {
   benefits: "",
 };
 
+/* Helper: today's date for deadline validation */
+const getTodayDate = () => {
+  return new Date().toISOString().split("T")[0];
+};
+
+/* Helper: get label from select option */
+const getOptionLabel = (items, id) => {
+  return items.find((item) => item.id === id)?.label || "";
+};
+
+/* Helper: convert comma-separated skills to array */
+const formatSkills = (skills) => {
+  return skills
+    .split(",")
+    .map((skill) => skill.trim())
+    .filter(Boolean);
+};
+
 const PostJobPage = () => {
+  /* Form state */
   const [formData, setFormData] = useState(initialFormData);
+
+  /* Form errors */
   const [errors, setErrors] = useState({});
+
+  /* Submit loading state */
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  /* Success message */
   const [successMessage, setSuccessMessage] = useState("");
 
   const isCompanyApproved = recruiterCompany.status === "approved";
 
+  /* Job preview values */
+  const preview = useMemo(() => {
+    return {
+      title: formData.title || "Untitled Job",
+      category: getOptionLabel(jobCategories, formData.category) || "Category",
+      type: getOptionLabel(jobTypes, formData.type) || "Job Type",
+      experience:
+        getOptionLabel(experienceLevels, formData.experienceLevel) ||
+        "Experience Level",
+      location: formData.isRemote
+        ? "Remote"
+        : formData.city && formData.country
+          ? `${formData.city}, ${formData.country}`
+          : "Location",
+      salary:
+        formData.salaryMin && formData.salaryMax
+          ? `${formData.currency} ${formData.salaryMin} - ${formData.salaryMax}`
+          : "Salary range",
+      skills: formatSkills(formData.skills),
+    };
+  }, [formData]);
+
+  /* Handle input/select change */
   const handleChange = (name, value) => {
     setFormData((prev) => ({
       ...prev,
@@ -92,8 +175,12 @@ const PostJobPage = () => {
     setSuccessMessage("");
   };
 
+  /* Validate form before publish */
   const validateForm = () => {
     const newErrors = {};
+
+    const salaryMin = Number(formData.salaryMin);
+    const salaryMax = Number(formData.salaryMax);
 
     if (!formData.title.trim()) {
       newErrors.title = "Job title is required.";
@@ -107,6 +194,14 @@ const PostJobPage = () => {
       newErrors.type = "Job type is required.";
     }
 
+    if (!formData.experienceLevel) {
+      newErrors.experienceLevel = "Experience level is required.";
+    }
+
+    if (!formData.skills.trim()) {
+      newErrors.skills = "At least one skill is required.";
+    }
+
     if (!formData.salaryMin) {
       newErrors.salaryMin = "Minimum salary is required.";
     }
@@ -115,11 +210,15 @@ const PostJobPage = () => {
       newErrors.salaryMax = "Maximum salary is required.";
     }
 
-    if (
-      formData.salaryMin &&
-      formData.salaryMax &&
-      Number(formData.salaryMin) > Number(formData.salaryMax)
-    ) {
+    if (formData.salaryMin && salaryMin <= 0) {
+      newErrors.salaryMin = "Minimum salary must be greater than 0.";
+    }
+
+    if (formData.salaryMax && salaryMax <= 0) {
+      newErrors.salaryMax = "Maximum salary must be greater than 0.";
+    }
+
+    if (formData.salaryMin && formData.salaryMax && salaryMin > salaryMax) {
       newErrors.salaryMax =
         "Maximum salary must be greater than minimum salary.";
     }
@@ -142,6 +241,10 @@ const PostJobPage = () => {
       newErrors.deadline = "Application deadline is required.";
     }
 
+    if (formData.deadline && formData.deadline < getTodayDate()) {
+      newErrors.deadline = "Deadline cannot be in the past.";
+    }
+
     if (!formData.responsibilities.trim()) {
       newErrors.responsibilities = "Responsibilities are required.";
     }
@@ -159,6 +262,55 @@ const PostJobPage = () => {
     return Object.keys(newErrors).length === 0;
   };
 
+  /* Build final payload for API */
+  const buildJobPayload = (status = "active") => {
+    return {
+      title: formData.title.trim(),
+      category: formData.category,
+      type: formData.type,
+      experienceLevel: formData.experienceLevel,
+      skills: formatSkills(formData.skills),
+      salary: {
+        min: formData.salaryMin ? Number(formData.salaryMin) : null,
+        max: formData.salaryMax ? Number(formData.salaryMax) : null,
+        currency: formData.currency,
+      },
+      location: {
+        type: formData.isRemote ? "remote" : "onsite",
+        city: formData.isRemote ? "" : formData.city.trim(),
+        country: formData.isRemote ? "" : formData.country.trim(),
+        display: formData.isRemote
+          ? "Remote"
+          : `${formData.city.trim()}, ${formData.country.trim()}`,
+      },
+      deadline: formData.deadline,
+      description: {
+        responsibilities: formData.responsibilities.trim(),
+        requirements: formData.requirements.trim(),
+        benefits: formData.benefits.trim(),
+      },
+      company: {
+        id: recruiterCompany.id,
+        name: recruiterCompany.name,
+      },
+      status,
+      visibility: status === "active" ? "public" : "private",
+      createdAt: new Date().toISOString(),
+    };
+  };
+
+  /* Save draft */
+  const handleSaveDraft = () => {
+    const payload = buildJobPayload("draft");
+
+    console.log("SAVE DRAFT PAYLOAD:", payload);
+
+    setSuccessMessage(
+      "Job draft saved locally. API integration can be added later."
+    );
+  };
+
+  /* Publish job */
   const handleSubmit = async (event) => {
     event.preventDefault();
 
@@ -167,17 +319,7 @@ const PostJobPage = () => {
     try {
       setIsSubmitting(true);
 
-      const payload = {
-        ...formData,
-        status: "active",
-        visibility: "public",
-        companyId: recruiterCompany.id,
-        companyName: recruiterCompany.name,
-        location: formData.isRemote
-          ? "Remote"
-          : `${formData.city}, ${formData.country}`,
-        createdAt: new Date().toISOString(),
-      };
+      const payload = buildJobPayload("active");
 
       console.log("POST JOB PAYLOAD:", payload);
 
@@ -203,8 +345,8 @@ const PostJobPage = () => {
 
   return (
     <section className="min-h-screen bg-[#151515] p-6 text-white lg:p-8">
-      <div className="mx-auto max-w-6xl">
-        {/* Page Header */}
+      <div className="mx-auto max-w-7xl">
+        {/* Page header */}
         <div className="mb-8 flex flex-col justify-between gap-4 border-b border-white/10 pb-6 md:flex-row md:items-end">
           <div>
             <p className="mb-3 inline-flex items-center gap-2 rounded-full border border-violet-400/20 bg-violet-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-violet-200">
@@ -229,268 +371,330 @@ const PostJobPage = () => {
           </div>
         </div>
 
-        <Form
-          validationBehavior="aria"
-          onSubmit={handleSubmit}
-          className="space-y-6"
-        >
-          {/* Job Info Section */}
-          <Fieldset className="rounded-3xl border border-white/10 bg-[#1b1b1b] p-6 shadow-2xl shadow-black/20">
-            <Fieldset.Legend className="flex items-center gap-3 text-xl font-semibold text-white">
-              <FiBriefcase className="h-5 w-5 text-violet-300" />
-              Job Info
-            </Fieldset.Legend>
+        <div className="grid gap-6 xl:grid-cols-[1fr_360px]">
+          {/* Main form */}
+          <Form
+            validationBehavior="aria"
+            onSubmit={handleSubmit}
+            className="space-y-6"
+          >
+            {/* Job info section */}
+            <Fieldset className="rounded-3xl border border-white/10 bg-[#1b1b1b] p-6 shadow-2xl shadow-black/20">
+              <Fieldset.Legend className="flex items-center gap-3 text-xl font-semibold text-white">
+                <FiBriefcase className="h-5 w-5 text-violet-300" />
+                Job Info
+              </Fieldset.Legend>
 
-            <Fieldset.Group className="mt-6 grid gap-5 md:grid-cols-2">
-              {/* Job Title */}
-              <AppTextField
-                label="Job Title"
-                name="title"
-                placeholder="Senior Product Designer"
-                value={formData.title}
-                error={errors.title}
-                onChange={(value) => handleChange("title", value)}
-              />
+              <Fieldset.Group className="mt-6 grid gap-5 md:grid-cols-2">
+                <AppTextField
+                  label="Job Title"
+                  name="title"
+                  placeholder="Senior Product Designer"
+                  value={formData.title}
+                  error={errors.title}
+                  onChange={(value) => handleChange("title", value)}
+                />
 
-              {/* Job Category */}
-              <AppSelect
-                label="Job Category"
-                placeholder="Select category"
-                value={formData.category}
-                error={errors.category}
-                items={jobCategories}
-                onChange={(value) => handleChange("category", value)}
-              />
+                <AppSelect
+                  label="Job Category"
+                  placeholder="Select category"
+                  value={formData.category}
+                  error={errors.category}
+                  items={jobCategories}
+                  onChange={(value) => handleChange("category", value)}
+                />
 
-              {/* Job Type */}
-              <AppSelect
-                label="Job Type"
-                placeholder="Select job type"
-                value={formData.type}
-                error={errors.type}
-                items={jobTypes}
-                onChange={(value) => handleChange("type", value)}
-              />
+                <AppSelect
+                  label="Job Type"
+                  placeholder="Select job type"
+                  value={formData.type}
+                  error={errors.type}
+                  items={jobTypes}
+                  onChange={(value) => handleChange("type", value)}
+                />
 
-              {/* Currency */}
-              <AppSelect
-                label="Currency"
-                placeholder="Select currency"
-                value={formData.currency}
-                error={errors.currency}
-                items={currencies}
-                onChange={(value) => handleChange("currency", value)}
-              />
+                <AppSelect
+                  label="Experience Level"
+                  placeholder="Select experience level"
+                  value={formData.experienceLevel}
+                  error={errors.experienceLevel}
+                  items={experienceLevels}
+                  onChange={(value) => handleChange("experienceLevel", value)}
+                />
 
-              {/* Minimum Salary */}
-              <AppTextField
-                label="Minimum Salary"
-                name="salaryMin"
-                type="number"
-                placeholder="50000"
-                value={formData.salaryMin}
-                error={errors.salaryMin}
-                onChange={(value) => handleChange("salaryMin", value)}
-              />
+                <AppTextField
+                  label="Skills"
+                  name="skills"
+                  placeholder="React, Next.js, MongoDB"
+                  value={formData.skills}
+                  error={errors.skills}
+                  onChange={(value) => handleChange("skills", value)}
+                />
 
-              {/* Maximum Salary */}
-              <AppTextField
-                label="Maximum Salary"
-                name="salaryMax"
-                type="number"
-                placeholder="90000"
-                value={formData.salaryMax}
-                error={errors.salaryMax}
-                onChange={(value) => handleChange("salaryMax", value)}
-              />
+                <AppSelect
+                  label="Currency"
+                  placeholder="Select currency"
+                  value={formData.currency}
+                  error={errors.currency}
+                  items={currencies}
+                  onChange={(value) => handleChange("currency", value)}
+                />
 
-              {/* Remote Toggle */}
-              <div className="md:col-span-2 rounded-2xl border border-white/10 bg-black/20 p-4">
-                <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-                  <div>
-                    <Label className="text-sm font-medium text-white">
-                      Remote job
-                    </Label>
+                <AppTextField
+                  label="Minimum Salary"
+                  name="salaryMin"
+                  type="number"
+                  placeholder="50000"
+                  value={formData.salaryMin}
+                  error={errors.salaryMin}
+                  onChange={(value) => handleChange("salaryMin", value)}
+                />
 
-                    <Description className="mt-1 text-sm text-white/45">
-                      Turn this on if this job does not require a physical
-                      location.
-                    </Description>
-                  </div>
+                <AppTextField
+                  label="Maximum Salary"
+                  name="salaryMax"
+                  type="number"
+                  placeholder="90000"
+                  value={formData.salaryMax}
+                  error={errors.salaryMax}
+                  onChange={(value) => handleChange("salaryMax", value)}
+                />
 
-                  <button
-                    type="button"
-                    onClick={() => handleChange("isRemote", !formData.isRemote)}
-                    className={`relative h-8 w-14 rounded-full transition ${
-                      formData.isRemote
-                        ? "bg-violet-500"
-                        : "bg-white/10"
-                    }`}
-                  >
-                    <span
-                      className={`absolute top-1 h-6 w-6 rounded-full bg-white transition ${
-                        formData.isRemote ? "left-7" : "left-1"
+                {/* Remote toggle */}
+                <div className="md:col-span-2 rounded-2xl border border-white/10 bg-black/20 p-4">
+                  <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+                    <div>
+                      <Label className="text-sm font-medium text-white">
+                        Remote job
+                      </Label>
+
+                      <Description className="mt-1 block text-sm leading-6 text-white/45">
+                        Turn this on if this job does not require a physical
+                        location.
+                      </Description>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleChange("isRemote", !formData.isRemote)
+                      }
+                      className={`relative h-8 w-14 shrink-0 rounded-full transition ${
+                        formData.isRemote ? "bg-violet-500" : "bg-white/10"
                       }`}
+                    >
+                      <span
+                        className={`absolute top-1 h-6 w-6 rounded-full bg-white transition ${
+                          formData.isRemote ? "left-7" : "left-1"
+                        }`}
+                      />
+                    </button>
+                  </div>
+                </div>
+
+                {!formData.isRemote && (
+                  <>
+                    <AppTextField
+                      label="City"
+                      name="city"
+                      placeholder="Dhaka"
+                      value={formData.city}
+                      error={errors.city}
+                      onChange={(value) => handleChange("city", value)}
                     />
-                  </button>
-                </div>
-              </div>
 
-              {/* City */}
-              {!formData.isRemote && (
-                <AppTextField
-                  label="City"
-                  name="city"
-                  placeholder="Dhaka"
-                  value={formData.city}
-                  error={errors.city}
-                  onChange={(value) => handleChange("city", value)}
-                />
-              )}
-
-              {/* Country */}
-              {!formData.isRemote && (
-                <AppTextField
-                  label="Country"
-                  name="country"
-                  placeholder="Bangladesh"
-                  value={formData.country}
-                  error={errors.country}
-                  onChange={(value) => handleChange("country", value)}
-                />
-              )}
-
-              {/* Deadline */}
-              <AppTextField
-                label="Application Deadline"
-                name="deadline"
-                type="date"
-                value={formData.deadline}
-                error={errors.deadline}
-                onChange={(value) => handleChange("deadline", value)}
-              />
-            </Fieldset.Group>
-          </Fieldset>
-
-          {/* Job Description Section */}
-          <Fieldset className="rounded-3xl border border-white/10 bg-[#1b1b1b] p-6 shadow-2xl shadow-black/20">
-            <Fieldset.Legend className="flex items-center gap-3 text-xl font-semibold text-white">
-              <FiCalendar className="h-5 w-5 text-violet-300" />
-              Job Description
-            </Fieldset.Legend>
-
-            <Fieldset.Group className="mt-6 grid gap-5">
-              {/* Responsibilities */}
-              <AppTextArea
-                label="Responsibilities"
-                name="responsibilities"
-                placeholder="Write the key responsibilities for this role..."
-                value={formData.responsibilities}
-                error={errors.responsibilities}
-                onChange={(value) => handleChange("responsibilities", value)}
-              />
-
-              {/* Requirements */}
-              <AppTextArea
-                label="Requirements"
-                name="requirements"
-                placeholder="Write required skills, experience, and qualifications..."
-                value={formData.requirements}
-                error={errors.requirements}
-                onChange={(value) => handleChange("requirements", value)}
-              />
-
-              {/* Benefits */}
-              <AppTextArea
-                label="Benefits"
-                name="benefits"
-                placeholder="Health insurance, remote flexibility, bonuses, learning budget..."
-                value={formData.benefits}
-                error={errors.benefits}
-                onChange={(value) => handleChange("benefits", value)}
-              />
-            </Fieldset.Group>
-          </Fieldset>
-
-          {/* Company Section */}
-          <Fieldset className="rounded-3xl border border-white/10 bg-[#1b1b1b] p-6 shadow-2xl shadow-black/20">
-            <Fieldset.Legend className="flex items-center gap-3 text-xl font-semibold text-white">
-              <FiMapPin className="h-5 w-5 text-violet-300" />
-              Company
-            </Fieldset.Legend>
-
-            <Fieldset.Group className="mt-6">
-              <div className="rounded-2xl border border-white/10 bg-black/25 p-5">
-                <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
-                  <div>
-                    <p className="text-sm text-white/45">
-                      Auto-filled company
-                    </p>
-
-                    <h3 className="mt-1 text-lg font-semibold text-white">
-                      {recruiterCompany.name}
-                    </h3>
-
-                    <p className="mt-2 text-sm text-white/45">
-                      This job will be linked to this company profile.
-                    </p>
-                  </div>
-
-                  <div
-                    className={`inline-flex w-fit items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold uppercase ${
-                      isCompanyApproved
-                        ? "bg-green-500/15 text-green-300"
-                        : "bg-red-500/15 text-red-300"
-                    }`}
-                  >
-                    {isCompanyApproved ? (
-                      <FiCheckCircle className="h-4 w-4" />
-                    ) : (
-                      <FiAlertCircle className="h-4 w-4" />
-                    )}
-
-                    {isCompanyApproved ? "Approved" : "Not Approved"}
-                  </div>
-                </div>
-
-                {errors.company && (
-                  <p className="mt-4 text-sm text-red-400">
-                    {errors.company}
-                  </p>
+                    <AppTextField
+                      label="Country"
+                      name="country"
+                      placeholder="Bangladesh"
+                      value={formData.country}
+                      error={errors.country}
+                      onChange={(value) => handleChange("country", value)}
+                    />
+                  </>
                 )}
-              </div>
-            </Fieldset.Group>
 
-            <Fieldset.Actions className="mt-6 flex flex-col gap-3 border-t border-white/10 pt-6 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm text-white/40">
-                On submit, the job will be saved as active and publicly visible.
+                <AppTextField
+                  label="Application Deadline"
+                  name="deadline"
+                  type="date"
+                  value={formData.deadline}
+                  error={errors.deadline}
+                  onChange={(value) => handleChange("deadline", value)}
+                />
+              </Fieldset.Group>
+            </Fieldset>
+
+            {/* Job description section */}
+            <Fieldset className="rounded-3xl border border-white/10 bg-[#1b1b1b] p-6 shadow-2xl shadow-black/20">
+              <Fieldset.Legend className="flex items-center gap-3 text-xl font-semibold text-white">
+                <FiCalendar className="h-5 w-5 text-violet-300" />
+                Job Description
+              </Fieldset.Legend>
+
+              <Fieldset.Group className="mt-6 grid gap-5">
+                <AppTextArea
+                  label="Responsibilities"
+                  name="responsibilities"
+                  placeholder="Write the key responsibilities for this role..."
+                  value={formData.responsibilities}
+                  error={errors.responsibilities}
+                  onChange={(value) => handleChange("responsibilities", value)}
+                />
+
+                <AppTextArea
+                  label="Requirements"
+                  name="requirements"
+                  placeholder="Write required skills, experience, and qualifications..."
+                  value={formData.requirements}
+                  error={errors.requirements}
+                  onChange={(value) => handleChange("requirements", value)}
+                />
+
+                <AppTextArea
+                  label="Benefits"
+                  name="benefits"
+                  placeholder="Health insurance, remote flexibility, bonuses, learning budget..."
+                  value={formData.benefits}
+                  error={errors.benefits}
+                  onChange={(value) => handleChange("benefits", value)}
+                />
+              </Fieldset.Group>
+            </Fieldset>
+
+            {/* Company section */}
+            <Fieldset className="rounded-3xl border border-white/10 bg-[#1b1b1b] p-6 shadow-2xl shadow-black/20">
+              <Fieldset.Legend className="flex items-center gap-3 text-xl font-semibold text-white">
+                <FiMapPin className="h-5 w-5 text-violet-300" />
+                Company
+              </Fieldset.Legend>
+
+              <Fieldset.Group className="mt-6">
+                <div className="rounded-2xl border border-white/10 bg-black/25 p-5">
+                  <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
+                    <div>
+                      <p className="text-sm text-white/45">
+                        Auto-filled company
+                      </p>
+
+                      <h3 className="mt-1 text-lg font-semibold text-white">
+                        {recruiterCompany.name}
+                      </h3>
+
+                      <p className="mt-2 text-sm text-white/45">
+                        This job will be linked to this company profile.
+                      </p>
+                    </div>
+
+                    <div
+                      className={`inline-flex w-fit items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold uppercase ${
+                        isCompanyApproved
+                          ? "bg-green-500/15 text-green-300"
+                          : "bg-red-500/15 text-red-300"
+                      }`}
+                    >
+                      {isCompanyApproved ? (
+                        <FiCheckCircle className="h-4 w-4" />
+                      ) : (
+                        <FiAlertCircle className="h-4 w-4" />
+                      )}
+
+                      {isCompanyApproved ? "Approved" : "Not Approved"}
+                    </div>
+                  </div>
+
+                  {errors.company && (
+                    <p className="mt-4 text-sm text-red-400">
+                      {errors.company}
+                    </p>
+                  )}
+                </div>
+              </Fieldset.Group>
+
+              <Fieldset.Actions className="mt-6 flex flex-col gap-3 border-t border-white/10 pt-6 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-sm text-white/40">
+                  On submit, the job will be saved as active and publicly
+                  visible.
+                </p>
+
+                <div className="flex flex-col gap-3 sm:flex-row">
+                  <Button
+                    type="button"
+                    onPress={handleSaveDraft}
+                    className="h-12 rounded-xl border border-white/10 bg-white/5 px-6 text-sm font-semibold text-white"
+                  >
+                    <FiSave className="h-4 w-4" />
+                    Save Draft
+                  </Button>
+
+                  <Button
+                    type="submit"
+                    isDisabled={!isCompanyApproved || isSubmitting}
+                    className="h-12 rounded-xl bg-linear-to-r from-[#7C5CFF] to-[#5B7CFF] px-6 text-sm font-semibold text-white shadow-lg shadow-violet-500/20"
+                  >
+                    <FiSend className="h-4 w-4" />
+                    {isSubmitting ? "Publishing..." : "Publish Job"}
+                  </Button>
+                </div>
+              </Fieldset.Actions>
+            </Fieldset>
+
+            {successMessage && (
+              <div className="rounded-2xl border border-green-500/20 bg-green-500/10 px-4 py-3 text-sm text-green-300">
+                {successMessage}
+              </div>
+            )}
+
+            {errors.submit && (
+              <div className="rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+                {errors.submit}
+              </div>
+            )}
+          </Form>
+
+          {/* Preview card */}
+          <aside className="h-fit rounded-3xl border border-white/10 bg-[#1b1b1b] p-6 shadow-2xl shadow-black/20 xl:sticky xl:top-8">
+            <div className="mb-5 flex items-center gap-2">
+              <FiEye className="h-5 w-5 text-violet-300" />
+              <h2 className="text-lg font-semibold text-white">Job Preview</h2>
+            </div>
+
+            <div className="rounded-2xl border border-white/10 bg-black/25 p-5">
+              <p className="text-xs uppercase tracking-[0.18em] text-violet-200">
+                {preview.category}
               </p>
 
-              <Button
-                type="submit"
-                isDisabled={!isCompanyApproved || isSubmitting}
-                className="h-12 rounded-xl bg-linear-to-r from-[#7C5CFF] to-[#5B7CFF] px-6 text-sm font-semibold text-white shadow-lg shadow-violet-500/20"
-              >
-                <FiSend className="h-4 w-4" />
-                {isSubmitting ? "Publishing..." : "Publish Job"}
-              </Button>
-            </Fieldset.Actions>
-          </Fieldset>
+              <h3 className="mt-3 text-xl font-semibold text-white">
+                {preview.title}
+              </h3>
 
-          {/* Success Message */}
-          {successMessage && (
-            <div className="rounded-2xl border border-green-500/20 bg-green-500/10 px-4 py-3 text-sm text-green-300">
-              {successMessage}
-            </div>
-          )}
+              <div className="mt-4 space-y-2 text-sm text-white/50">
+                <p>{preview.type}</p>
+                <p>{preview.experience}</p>
+                <p>{preview.location}</p>
+                <p>{preview.salary}</p>
+              </div>
 
-          {/* Submit Error */}
-          {errors.submit && (
-            <div className="rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300">
-              {errors.submit}
+              {preview.skills.length > 0 && (
+                <div className="mt-5 flex flex-wrap gap-2">
+                  {preview.skills.map((skill) => (
+                    <span
+                      key={skill}
+                      className="rounded-full border border-white/10 bg-white/6 px-3 py-1 text-xs text-white/70"
+                    >
+                      {skill}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
-          )}
-        </Form>
+
+            <p className="mt-5 text-sm leading-6 text-white/40">
+              This preview helps recruiters check how the job post may appear
+              before publishing.
+            </p>
+          </aside>
+        </div>
       </div>
     </section>
   );
