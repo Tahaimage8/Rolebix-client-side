@@ -354,7 +354,7 @@ const SignInPage = () => {
             >
               Don&apos;t have an account?{" "}
               <Link
-                href="/register"
+                href="/auth/register"
                 className="font-medium text-violet-300 transition hover:text-violet-200"
               >
                 Create account

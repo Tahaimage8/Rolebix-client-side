@@ -5,7 +5,6 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { motion } from "motion/react";
 
 import { CircleCheck } from "@gravity-ui/icons";
 import {
@@ -16,27 +15,40 @@ import {
   FiEye,
   FiEyeOff,
   FiArrowLeft,
+  FiBriefcase,
+  FiUsers,
 } from "react-icons/fi";
+
 import { authClient } from "@/lib/auth-client";
 import { toast } from "react-toastify";
 
+/* Initial form data */
 const initialFormData = {
   name: "",
   email: "",
   image: "",
   password: "",
   confirmPassword: "",
+  role: "seeker",
 };
 
 const SignUpPage = () => {
   const router = useRouter();
 
+  /* Form state */
   const [formData, setFormData] = useState(initialFormData);
+
+  /* Loading state */
   const [isLoading, setIsLoading] = useState(false);
+
+  /* Password visibility states */
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  /* Image preview error state */
   const [imageError, setImageError] = useState(false);
 
+  /* Input change handler */
   const handleChange = (event) => {
     const { name, value } = event.target;
 
@@ -50,12 +62,22 @@ const SignUpPage = () => {
     }
   };
 
+  /* Role change handler */
+  const handleRoleChange = (role) => {
+    setFormData((prev) => ({
+      ...prev,
+      role,
+    }));
+  };
+
+  /* Form validation */
   const validateForm = () => {
     const name = formData.name.trim();
     const email = formData.email.trim();
     const image = formData.image.trim();
     const password = formData.password;
     const confirmPassword = formData.confirmPassword;
+    const role = formData.role;
 
     if (!name) {
       toast.error("Name is required.");
@@ -77,6 +99,11 @@ const SignUpPage = () => {
       return false;
     }
 
+    if (!role) {
+      toast.error("Please select your role.");
+      return false;
+    }
+
     if (!password) {
       toast.error("Password is required.");
       return false;
@@ -95,6 +122,7 @@ const SignUpPage = () => {
     return true;
   };
 
+  /* Submit handler */
   const handleSubmit = async (event) => {
     event.preventDefault();
 
@@ -108,6 +136,7 @@ const SignUpPage = () => {
         email: formData.email.trim(),
         password: formData.password,
         image: formData.image.trim(),
+        role: formData.role,
         callbackURL: "/",
       });
 
@@ -131,242 +160,73 @@ const SignUpPage = () => {
   };
 
   return (
-    <motion.main
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-      className="relative min-h-screen overflow-hidden bg-black px-4 py-10 text-white sm:px-6 lg:px-8"
-    >
+    <main className="relative min-h-screen overflow-hidden bg-black px-4 py-10 text-white sm:px-6 lg:px-8">
       {/* Background */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.65 }}
-        className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(124,92,255,0.28),transparent_34%),linear-gradient(180deg,#181818_0%,#050505_55%,#000000_100%)]"
-      />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(124,92,255,0.28),transparent_34%),linear-gradient(180deg,#181818_0%,#050505_55%,#000000_100%)]" />
 
-      <motion.div
-        initial={{ opacity: 0, scale: 0.86 }}
-        animate={{
-          opacity: 1,
-          scale: 1,
-        }}
-        transition={{
-          duration: 0.85,
-          ease: [0.22, 1, 0.36, 1],
-        }}
-        className="pointer-events-none absolute left-1/2 top-0 h-105 w-180 -translate-x-1/2 rounded-full bg-violet-600/15 blur-[120px]"
-      />
+      {/* Background glow shape */}
+      <div className="pointer-events-none absolute left-1/2 top-0 h-105 w-180 -translate-x-1/2 rounded-full bg-violet-600/15" />
 
-      <motion.div
-        aria-hidden="true"
-        animate={{
-          opacity: [0.15, 0.3, 0.15],
-          scale: [1, 1.08, 1],
-        }}
-        transition={{
-          duration: 6,
-          repeat: Infinity,
-          ease: "easeInOut",
-        }}
-        className="pointer-events-none absolute right-10 top-28 h-56 w-56 rounded-full bg-[#7C5CFF]/10 blur-[90px]"
-      />
+      {/* Background small glow shape */}
+      <div className="pointer-events-none absolute right-10 top-28 h-56 w-56 rounded-full bg-[#7C5CFF]/10" />
 
-      <motion.section
-        initial="hidden"
-        animate="visible"
-        variants={{
-          hidden: {},
-          visible: {
-            transition: {
-              staggerChildren: 0.12,
-              delayChildren: 0.08,
-            },
-          },
-        }}
-        className="relative z-10 mx-auto grid min-h-[calc(100vh-80px)] max-w-6xl items-center gap-10 lg:grid-cols-[1fr_460px]"
-      >
+      {/* Main layout */}
+      <section className="relative z-10 mx-auto grid min-h-[calc(100vh-80px)] max-w-6xl items-center gap-10 lg:grid-cols-[1fr_460px]">
         {/* Left content */}
-        <motion.div
-          variants={{
-            hidden: {
-              opacity: 0,
-              x: -32,
-              filter: "blur(6px)",
-            },
-            visible: {
-              opacity: 1,
-              x: 0,
-              filter: "blur(0px)",
-            },
-          }}
-          transition={{
-            duration: 0.62,
-            ease: [0.22, 1, 0.36, 1],
-          }}
-          className="hidden lg:block"
-        >
-          <motion.div whileHover={{ x: -3 }} whileTap={{ scale: 0.98 }}>
-            <Link
-              href="/"
-              className="inline-flex items-center gap-2 text-sm font-medium text-white/55 transition hover:text-white"
-            >
-              <FiArrowLeft className="h-4 w-4" />
-              Back to home
-            </Link>
-          </motion.div>
+        <div className="hidden lg:block">
+          {/* Back to home link */}
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 text-sm font-medium text-white/55 transition hover:text-white"
+          >
+            <FiArrowLeft className="h-4 w-4" />
+            Back to home
+          </Link>
 
+          {/* Left heading area */}
           <div className="mt-12">
-            <motion.div
-              initial={{ opacity: 0, y: 16, scale: 0.96 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              transition={{
-                duration: 0.45,
-                delay: 0.18,
-                ease: [0.22, 1, 0.36, 1],
-              }}
-              whileHover={{ y: -2, scale: 1.015 }}
-              className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/6 px-4 py-2 text-xs uppercase tracking-[0.2em] text-white/70"
-            >
-              <motion.span
-                animate={{
-                  rotate: [0, 360],
-                  scale: [1, 1.08, 1],
-                }}
-                transition={{
-                  duration: 3,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                }}
-              >
-                <CircleCheck className="h-4 w-4 text-violet-300" />
-              </motion.span>
+            {/* Badge */}
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/6 px-4 py-2 text-xs uppercase tracking-[0.2em] text-white/70">
+              <CircleCheck className="h-4 w-4 text-violet-300" />
               Join Rolebix
-            </motion.div>
+            </div>
 
-            <motion.h1
-              initial={{ opacity: 0, y: 28, filter: "blur(8px)" }}
-              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-              transition={{
-                duration: 0.6,
-                delay: 0.25,
-                ease: [0.22, 1, 0.36, 1],
-              }}
-              className="max-w-xl text-5xl font-semibold tracking-tighter text-white lg:text-[70px] lg:leading-[0.98]"
-            >
+            {/* Main heading */}
+            <h1 className="max-w-xl text-5xl font-semibold tracking-tighter text-white lg:text-[70px] lg:leading-[0.98]">
               Create your career profile.
-            </motion.h1>
+            </h1>
 
-            <motion.p
-              initial={{ opacity: 0, y: 18 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{
-                duration: 0.5,
-                delay: 0.34,
-                ease: [0.22, 1, 0.36, 1],
-              }}
-              className="mt-6 max-w-lg text-base leading-8 text-white/55"
-            >
+            {/* Main description */}
+            <p className="mt-6 max-w-lg text-base leading-8 text-white/55">
               Save jobs, apply faster, track your applications, and discover
               roles that match your skills.
-            </motion.p>
+            </p>
           </div>
-        </motion.div>
+        </div>
 
         {/* Form card */}
-        <motion.div
-          variants={{
-            hidden: {
-              opacity: 0,
-              x: 34,
-              y: 18,
-              rotateX: 10,
-              rotateY: -10,
-              scale: 0.95,
-              filter: "blur(8px)",
-            },
-            visible: {
-              opacity: 1,
-              x: 0,
-              y: 0,
-              rotateX: 0,
-              rotateY: 0,
-              scale: 1,
-              filter: "blur(0px)",
-            },
-          }}
-          transition={{
-            duration: 0.72,
-            ease: [0.22, 1, 0.36, 1],
-          }}
-          whileHover={{
-            y: -4,
-            rotateX: 2,
-            rotateY: -2,
-            transition: {
-              duration: 0.25,
-              ease: "easeOut",
-            },
-          }}
-          style={{
-            transformPerspective: 1000,
-            transformStyle: "preserve-3d",
-          }}
-          className="rounded-[32px] border border-white/10 bg-[#111111]/90 p-6 shadow-2xl shadow-black/50 backdrop-blur-xl sm:p-8"
-        >
-          <motion.div
-            initial="hidden"
-            animate="visible"
-            variants={{
-              hidden: {},
-              visible: {
-                transition: {
-                  staggerChildren: 0.08,
-                },
-              },
-            }}
-            className="mb-8 text-center"
-          >
-            <motion.div
-              variants={{
-                hidden: { opacity: 0, y: 14, scale: 0.96 },
-                visible: { opacity: 1, y: 0, scale: 1 },
-              }}
-              transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <Link href="/" className="mb-6 inline-flex justify-center">
-                <Image
-                  src="/images/rolebix-logo.png"
-                  alt="Rolebix Logo"
-                  width={140}
-                  height={42}
-                  priority
-                  className="h-9 w-auto object-contain"
-                />
-              </Link>
-            </motion.div>
+        <div className="rounded-[32px] border border-white/10 bg-[#111111]/90 p-6 shadow-2xl shadow-black/50 sm:p-8">
+          {/* Form header */}
+          <div className="mb-8 text-center">
+            {/* Logo */}
+            <Link href="/" className="mb-6 inline-flex justify-center">
+              <Image
+                src="/images/rolebix-logo.png"
+                alt="Rolebix Logo"
+                width={140}
+                height={42}
+                priority
+                className="h-9 w-auto object-contain"
+              />
+            </Link>
 
-            <motion.h2
-              variants={{
-                hidden: { opacity: 0, y: 16 },
-                visible: { opacity: 1, y: 0 },
-              }}
-              transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
-              className="text-3xl font-semibold tracking-tight text-white"
-            >
+            {/* Form title */}
+            <h2 className="text-3xl font-semibold tracking-tight text-white">
               Create account
-            </motion.h2>
+            </h2>
 
-            <motion.p
-              variants={{
-                hidden: { opacity: 0, y: 12 },
-                visible: { opacity: 1, y: 0 },
-              }}
-              transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
-              className="mt-2 text-sm text-white/45"
-            >
+            {/* Sign in link */}
+            <p className="mt-2 text-sm text-white/45">
               Already have an account?{" "}
               <Link
                 href="/auth/signin"
@@ -374,24 +234,12 @@ const SignUpPage = () => {
               >
                 Sign in
               </Link>
-            </motion.p>
-          </motion.div>
+            </p>
+          </div>
 
-          <motion.form
-            initial="hidden"
-            animate="visible"
-            variants={{
-              hidden: {},
-              visible: {
-                transition: {
-                  staggerChildren: 0.07,
-                  delayChildren: 0.18,
-                },
-              },
-            }}
-            onSubmit={handleSubmit}
-            className="space-y-4"
-          >
+          {/* Registration form */}
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Name field */}
             <InputField
               icon={<FiUser />}
               label="Name"
@@ -402,6 +250,7 @@ const SignUpPage = () => {
               onChange={handleChange}
             />
 
+            {/* Email field */}
             <InputField
               icon={<FiMail />}
               label="Email"
@@ -412,6 +261,7 @@ const SignUpPage = () => {
               onChange={handleChange}
             />
 
+            {/* Image URL field */}
             <InputField
               icon={<FiImage />}
               label="Image URL"
@@ -422,18 +272,13 @@ const SignUpPage = () => {
               onChange={handleChange}
             />
 
+            {/* Image preview */}
             {formData.image && !imageError && (
-              <motion.div
-                initial={{ opacity: 0, y: 12, scale: 0.96 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-                className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/4 p-3"
-              >
-                <motion.img
+              <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/4 p-3">
+                <img
                   src={formData.image}
                   alt="Profile preview"
                   onError={() => setImageError(true)}
-                  whileHover={{ rotate: 3, scale: 1.05 }}
                   className="h-12 w-12 rounded-full object-cover"
                 />
 
@@ -445,20 +290,18 @@ const SignUpPage = () => {
                     This photo will be saved to your profile.
                   </p>
                 </div>
-              </motion.div>
+              </div>
             )}
 
+            {/* Image error message */}
             {imageError && (
-              <motion.p
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="text-sm text-red-400"
-              >
+              <p className="text-sm text-red-400">
                 Image URL could not be loaded. Please use a valid direct image
                 link.
-              </motion.p>
+              </p>
             )}
 
+            {/* Password field */}
             <PasswordField
               label="Password"
               name="password"
@@ -469,6 +312,7 @@ const SignUpPage = () => {
               onToggle={() => setShowPassword((prev) => !prev)}
             />
 
+            {/* Confirm password field */}
             <PasswordField
               label="Confirm Password"
               name="confirmPassword"
@@ -479,55 +323,35 @@ const SignUpPage = () => {
               onToggle={() => setShowConfirmPassword((prev) => !prev)}
             />
 
-            <motion.button
-              variants={{
-                hidden: { opacity: 0, y: 16, scale: 0.96 },
-                visible: { opacity: 1, y: 0, scale: 1 },
-              }}
-              transition={{
-                duration: 0.42,
-                ease: [0.22, 1, 0.36, 1],
-              }}
-              whileHover={{
-                y: -2,
-                scale: 1.015,
-              }}
-              whileTap={{
-                scale: 0.97,
-              }}
+            {/* Role selection */}
+            <RoleSelector value={formData.role} onChange={handleRoleChange} />
+
+            {/* Submit button */}
+            <button
               type="submit"
               disabled={isLoading}
               className="mt-2 flex h-14 w-full items-center justify-center rounded-2xl bg-linear-to-r from-[#7C5CFF] to-[#5B7CFF] text-sm font-semibold text-white shadow-lg shadow-violet-500/25 transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isLoading ? "Creating account..." : "Create account"}
-            </motion.button>
-          </motion.form>
+            </button>
+          </form>
 
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{
-              duration: 0.4,
-              delay: 0.5,
-              ease: [0.22, 1, 0.36, 1],
-            }}
-            className="mt-6 flex items-center justify-center"
-          >
-            <motion.div whileHover={{ y: -1 }} whileTap={{ scale: 0.98 }}>
-              <Link
-                href="/auth/signin"
-                className="text-sm text-white/45 transition hover:text-white"
-              >
-                Go back to sign in
-              </Link>
-            </motion.div>
-          </motion.div>
-        </motion.div>
-      </motion.section>
-    </motion.main>
+          {/* Bottom sign in link */}
+          <div className="mt-6 flex items-center justify-center">
+            <Link
+              href="/auth/signin"
+              className="text-sm text-white/45 transition hover:text-white"
+            >
+              Go back to sign in
+            </Link>
+          </div>
+        </div>
+      </section>
+    </main>
   );
 };
 
+/* Reusable input field */
 const InputField = ({
   icon,
   label,
@@ -538,50 +362,18 @@ const InputField = ({
   onChange,
 }) => {
   return (
-    <motion.label
-      variants={{
-        hidden: {
-          opacity: 0,
-          y: 16,
-          scale: 0.98,
-        },
-        visible: {
-          opacity: 1,
-          y: 0,
-          scale: 1,
-        },
-      }}
-      transition={{
-        duration: 0.42,
-        ease: [0.22, 1, 0.36, 1],
-      }}
-      className="block"
-    >
+    <label className="block">
+      {/* Field label */}
       <span className="mb-2 block text-sm font-medium text-white/70">
         {label}
       </span>
 
-      <motion.div
-        whileHover={{
-          y: -1,
-          scale: 1.005,
-        }}
-        className="flex h-14 items-center gap-3 rounded-2xl border border-white/10 bg-white/6 px-4 transition focus-within:border-violet-400/50 focus-within:bg-white/9"
-      >
-        <motion.span
-          whileHover={{
-            rotate: 360,
-            scale: 1.12,
-          }}
-          transition={{
-            duration: 0.55,
-            ease: "easeInOut",
-          }}
-          className="text-white/35 [&>svg]:h-4 [&>svg]:w-4"
-        >
-          {icon}
-        </motion.span>
+      {/* Field input wrapper */}
+      <div className="flex h-14 items-center gap-3 rounded-2xl border border-white/10 bg-white/6 px-4 transition focus-within:border-violet-400/50 focus-within:bg-white/9">
+        {/* Field icon */}
+        <span className="text-white/35 [&>svg]:h-4 [&>svg]:w-4">{icon}</span>
 
+        {/* Field input */}
         <input
           name={name}
           type={type}
@@ -590,11 +382,12 @@ const InputField = ({
           onChange={onChange}
           className="h-full w-full bg-transparent text-sm text-white outline-none placeholder:text-white/30"
         />
-      </motion.div>
-    </motion.label>
+      </div>
+    </label>
   );
 };
 
+/* Reusable password field */
 const PasswordField = ({
   label,
   name,
@@ -605,49 +398,18 @@ const PasswordField = ({
   onToggle,
 }) => {
   return (
-    <motion.label
-      variants={{
-        hidden: {
-          opacity: 0,
-          y: 16,
-          scale: 0.98,
-        },
-        visible: {
-          opacity: 1,
-          y: 0,
-          scale: 1,
-        },
-      }}
-      transition={{
-        duration: 0.42,
-        ease: [0.22, 1, 0.36, 1],
-      }}
-      className="block"
-    >
+    <label className="block">
+      {/* Password label */}
       <span className="mb-2 block text-sm font-medium text-white/70">
         {label}
       </span>
 
-      <motion.div
-        whileHover={{
-          y: -1,
-          scale: 1.005,
-        }}
-        className="flex h-14 items-center gap-3 rounded-2xl border border-white/10 bg-white/6 px-4 transition focus-within:border-violet-400/50 focus-within:bg-white/9"
-      >
-        <motion.span
-          whileHover={{
-            rotate: 360,
-            scale: 1.12,
-          }}
-          transition={{
-            duration: 0.55,
-            ease: "easeInOut",
-          }}
-        >
-          <FiLock className="h-4 w-4 shrink-0 text-white/35" />
-        </motion.span>
+      {/* Password input wrapper */}
+      <div className="flex h-14 items-center gap-3 rounded-2xl border border-white/10 bg-white/6 px-4 transition focus-within:border-violet-400/50 focus-within:bg-white/9">
+        {/* Password icon */}
+        <FiLock className="h-4 w-4 shrink-0 text-white/35" />
 
+        {/* Password input */}
         <input
           name={name}
           type={isVisible ? "text" : "password"}
@@ -657,14 +419,8 @@ const PasswordField = ({
           className="h-full w-full bg-transparent text-sm text-white outline-none placeholder:text-white/30"
         />
 
-        <motion.button
-          whileHover={{
-            scale: 1.12,
-            rotate: isVisible ? -8 : 8,
-          }}
-          whileTap={{
-            scale: 0.92,
-          }}
+        {/* Password show/hide button */}
+        <button
           type="button"
           onClick={onToggle}
           className="text-white/40 transition hover:text-white"
@@ -675,9 +431,70 @@ const PasswordField = ({
           ) : (
             <FiEye className="h-4 w-4" />
           )}
-        </motion.button>
-      </motion.div>
-    </motion.label>
+        </button>
+      </div>
+    </label>
+  );
+};
+
+/* Role selector */
+const RoleSelector = ({ value, onChange }) => {
+  const roles = [
+    {
+      value: "seeker",
+      label: "Job Seeker",
+      Icon: FiUsers,
+    },
+    {
+      value: "recruiter",
+      label: "Recruiter",
+      Icon: FiBriefcase,
+    },
+  ];
+
+  return (
+    <div className="space-y-3">
+      {/* Role selector label */}
+      <p className="text-sm font-medium text-white/70">I&apos;m joining as</p>
+
+      {/* Hidden role input */}
+      <input type="hidden" name="role" value={value} />
+
+      {/* Role buttons */}
+      <div className="grid grid-cols-2 gap-3">
+        {roles.map((role) => {
+          const Icon = role.Icon;
+          const isSelected = value === role.value;
+
+          return (
+            <button
+              key={role.value}
+              type="button"
+              onClick={() => onChange(role.value)}
+              className={`flex items-center gap-3 rounded-2xl border px-4 py-3 text-left transition ${
+                isSelected
+                  ? "border-violet-400/60 bg-violet-500/15 text-white"
+                  : "border-white/10 bg-white/6 text-white/55 hover:border-white/20 hover:text-white"
+              }`}
+            >
+              {/* Role icon */}
+              <span
+                className={`flex h-9 w-9 items-center justify-center rounded-xl border transition ${
+                  isSelected
+                    ? "border-violet-300/50 bg-violet-500/20 text-violet-200"
+                    : "border-white/10 bg-black/20 text-white/40"
+                }`}
+              >
+                <Icon className="h-4 w-4" />
+              </span>
+
+              {/* Role name */}
+              <span className="text-sm font-semibold">{role.label}</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 };
 
