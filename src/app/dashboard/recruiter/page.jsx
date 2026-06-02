@@ -13,7 +13,7 @@ const RecruiterDashboardHomePage = () => {
   if (isPending) {
     return (
       <div>
-        <Spinner size="xl" />
+        <Spinner size="sm" />
       </div>
     );
   }
