@@ -101,9 +101,9 @@ const normalizeWebsiteUrl = (url) => {
   return `https://${cleanUrl}`;
 };
 
-const CompanyProfile = ({ recruiter }) => {
+const CompanyProfile = ({ recruiter, recruiterCompany }) => {
   /* Saved company data */
-  const [company, setCompany] = useState(null);
+  const [company, setCompany] = useState(recruiterCompany);
 
   /* Create/edit mode */
   const [isEditing, setIsEditing] = useState(false);
@@ -208,7 +208,7 @@ const CompanyProfile = ({ recruiter }) => {
         {
           method: "POST",
           body: uploadFormData,
-        }
+        },
       );
 
       const data = await response.json();
@@ -292,7 +292,7 @@ const CompanyProfile = ({ recruiter }) => {
       employeeCount: formData.employeeCount,
       employeeCountLabel: getOptionLabel(
         employeeCountOptions,
-        formData.employeeCount
+        formData.employeeCount,
       ),
       description: formData.description.trim(),
       logoUrl,
@@ -304,20 +304,20 @@ const CompanyProfile = ({ recruiter }) => {
       },
       status: company?.status || "Pending",
       updatedAt: new Date().toISOString(),
-      recruiterId: recruiter?.id 
+      recruiterId: recruiter?.id,
     };
 
     // console.log("COMPANY PROFILE PAYLOAD:", payload);
-    
+
     setCompany(payload);
 
-const companyPayload = await createCompany(payload);
+    const companyPayload = await createCompany(payload);
 
-// console.log("CREATE COMPANY RESPONSE:", companyPayload);
+    // console.log("CREATE COMPANY RESPONSE:", companyPayload);
 
-if (companyPayload?.insertedId) {
-  toast.success("Company profile created successfully.");
-}
+    if (companyPayload?.insertedId) {
+      toast.success("Company profile created successfully.");
+    }
 
     setIsEditing(false);
     setErrors({});
@@ -415,7 +415,7 @@ if (companyPayload?.insertedId) {
 
                     <span
                       className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold ${getStatusStyles(
-                        company.status
+                        company.status,
                       )}`}
                     >
                       {company.status === "Approved" ? (
@@ -598,9 +598,7 @@ if (companyPayload?.insertedId) {
                     )}
 
                     {errors.logo && (
-                      <p className="mt-1 text-xs text-red-400">
-                        {errors.logo}
-                      </p>
+                      <p className="mt-1 text-xs text-red-400">{errors.logo}</p>
                     )}
                   </div>
                 </div>
