@@ -1,6 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
-
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import {
   Button,
@@ -185,6 +185,38 @@ const PostJobForm = ({ company }) => {
     };
   }, [formData]);
 
+  /* No company state */
+  if (!company) {
+    return (
+      <section className="min-h-screen bg-[#151515] p-6 text-white lg:p-8">
+        <div className="mx-auto flex min-h-[70vh] max-w-3xl items-center justify-center">
+          <div className="w-full rounded-3xl border border-white/10 bg-[#1b1b1b] p-8 text-center shadow-2xl shadow-black/20">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-white/10 bg-white/6">
+              <FiBriefcase className="h-7 w-7 text-white/50" />
+            </div>
+
+            <h1 className="mt-6 text-2xl font-semibold tracking-tight text-white">
+              Register your company first
+            </h1>
+
+            <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-white/45">
+              You need an approved company profile before posting jobs on
+              Rolebix.
+            </p>
+
+            <Button
+              as={Link}
+              href="/dashboard/recruiter/company"
+              className="mt-7 h-12 rounded-xl bg-white px-6 text-sm font-semibold text-black transition hover:bg-white/90"
+            >
+              Register Company
+            </Button>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   /* Handle input/select change */
   const handleChange = (name, value) => {
     setFormData((prev) => ({
@@ -344,7 +376,7 @@ const PostJobForm = ({ company }) => {
     console.log("SAVE DRAFT PAYLOAD:", payload);
 
     setSuccessMessage(
-      "Job draft saved locally. API integration can be added later."
+      "Job draft saved locally. API integration can be added later.",
     );
   };
 
@@ -364,7 +396,7 @@ const PostJobForm = ({ company }) => {
       if (res?.insertedId) {
         toast.success("Job posted successfully.");
         setSuccessMessage(
-          "Job posted successfully and is now publicly visible."
+          "Job posted successfully and is now publicly visible.",
         );
         setFormData(initialFormData);
         router.push("/dashboard/recruiter");
@@ -693,7 +725,7 @@ const PostJobForm = ({ company }) => {
 
                     <div
                       className={`inline-flex w-fit items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold uppercase ${getCompanyStatusStyles(
-                        companyStatus
+                        companyStatus,
                       )}`}
                     >
                       {isCompanyApproved ? (
@@ -811,9 +843,7 @@ const PostJobForm = ({ company }) => {
                     )}
 
                     <div>
-                      <p className="font-semibold text-white">
-                        {company.name}
-                      </p>
+                      <p className="font-semibold text-white">{company.name}</p>
                       <p className="text-xs text-white/40">
                         {company?.industryLabel ||
                           company?.industry ||

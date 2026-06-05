@@ -1,8 +1,17 @@
 const baseUri = process.env.NEXT_PUBLIC_BASE_URI;
 
 export const serverFetch = async (path) => {
-  const res = await fetch(`${baseUri}${path}`);
-  return res.json();
+  const res = await fetch(`${baseUri}${path}`, {
+    cache: "no-store",
+  });
+
+  const text = await res.text();
+
+  if (!text) {
+    return null;
+  }
+
+  return JSON.parse(text);
 };
 
 export const serverMutation = async (api, data) => {
@@ -13,5 +22,12 @@ export const serverMutation = async (api, data) => {
     },
     body: JSON.stringify(data),
   });
-  return res.json();
+
+  const text = await res.text();
+
+  if (!text) {
+    return null;
+  }
+
+  return JSON.parse(text);
 };
