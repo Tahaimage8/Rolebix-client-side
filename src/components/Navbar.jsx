@@ -48,8 +48,8 @@ const Navbar = () => {
         },
       });
 
-      console.log("SESSION DATA:", data);
-      console.log("SESSION ERROR:", error);
+      // console.log("SESSION DATA:", data);
+      // console.log("SESSION ERROR:", error);
 
       if (error) {
         setSession(null);
