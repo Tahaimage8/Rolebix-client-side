@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useMemo, useState } from "react";
@@ -21,13 +22,15 @@ import {
   FiCalendar,
   FiCheckCircle,
   FiEye,
+  FiGlobe,
   FiMapPin,
   FiSave,
   FiSend,
 } from "react-icons/fi";
+
 import { createJob } from "@/lib/actions/jobs";
 import { toast } from "react-toastify";
-import { redirect, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 /* Job category options */
 const jobCategories = [
@@ -81,13 +84,6 @@ const currencies = [
   { id: "GBP", label: "GBP" },
 ];
 
-/* Temporary recruiter company data */
-const recruiterCompany = {
-  id: "company_001",
-  name: "Rolebix Technologies",
-  status: "approved",
-};
-
 /* Initial form values */
 const initialFormData = {
   title: "",
@@ -125,9 +121,36 @@ const formatSkills = (skills) => {
     .filter(Boolean);
 };
 
-const PostJobForm = ({ company }) => {
+/* Helper: support MongoDB _id string/object */
+const getCompanyId = (company) => {
+  if (typeof company?._id === "string") return company._id;
+  if (company?._id?.$oid) return company._id.$oid;
+  return company?.id || "";
+};
 
-  console.log("RECRUITER COMPANY IN FORM:", company);
+/* Helper: company status styles */
+const getCompanyStatusStyles = (status) => {
+  const normalizedStatus = status?.toLowerCase();
+
+  if (normalizedStatus === "approved") {
+    return "border-green-500/20 bg-green-500/10 text-green-300";
+  }
+
+  if (normalizedStatus === "rejected") {
+    return "border-red-500/20 bg-red-500/10 text-red-300";
+  }
+
+  return "border-yellow-500/20 bg-yellow-500/10 text-yellow-300";
+};
+
+const PostJobForm = ({ company }) => {
+  const router = useRouter();
+
+  /* Company values */
+  const companyId = getCompanyId(company);
+  const companyStatus = company?.status || "Pending";
+  const isCompanyApproved = companyStatus.toLowerCase() === "approved";
+
   /* Form state */
   const [formData, setFormData] = useState(initialFormData);
 
@@ -139,8 +162,6 @@ const PostJobForm = ({ company }) => {
 
   /* Success message */
   const [successMessage, setSuccessMessage] = useState("");
-
-  const isCompanyApproved = recruiterCompany.status === "approved";
 
   /* Job preview values */
   const preview = useMemo(() => {
@@ -258,7 +279,11 @@ const PostJobForm = ({ company }) => {
       newErrors.requirements = "Requirements are required.";
     }
 
-    if (!isCompanyApproved) {
+    if (!company) {
+      newErrors.company = "Please register your company before posting a job.";
+    }
+
+    if (company && !isCompanyApproved) {
       newErrors.company = "Your company must be approved before posting a job.";
     }
 
@@ -295,12 +320,20 @@ const PostJobForm = ({ company }) => {
         benefits: formData.benefits.trim(),
       },
       company: {
-        id: recruiterCompany.id,
-        name: recruiterCompany.name,
+        id: companyId,
+        name: company?.name || "",
+        logoUrl: company?.logoUrl || "",
+        websiteUrl: company?.websiteUrl || "",
+        industry: company?.industry || "",
+        industryLabel: company?.industryLabel || company?.industry || "",
+        employeeCount: company?.employeeCount || "",
+        employeeCountLabel:
+          company?.employeeCountLabel || company?.employeeCount || "",
+        location: company?.location || "",
+        status: companyStatus,
       },
       status,
       visibility: status === "active" ? "public" : "private",
-      createdAt: new Date().toISOString(),
     };
   };
 
@@ -311,10 +344,10 @@ const PostJobForm = ({ company }) => {
     console.log("SAVE DRAFT PAYLOAD:", payload);
 
     setSuccessMessage(
-      "Job draft saved locally. API integration can be added later.",
+      "Job draft saved locally. API integration can be added later."
     );
   };
-  const router = useRouter();
+
   /* Publish job */
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -328,12 +361,10 @@ const PostJobForm = ({ company }) => {
 
       const res = await createJob(payload);
 
-      // console.log(payload)
-
-      if (res.insertedId) {
+      if (res?.insertedId) {
         toast.success("Job posted successfully.");
         setSuccessMessage(
-          "Job posted successfully and is now publicly visible.",
+          "Job posted successfully and is now publicly visible."
         );
         setFormData(initialFormData);
         router.push("/dashboard/recruiter");
@@ -375,11 +406,28 @@ const PostJobForm = ({ company }) => {
             </p>
           </div>
 
+          {/* Header company card */}
           <div className="rounded-2xl border border-white/10 bg-white/4 px-4 py-3">
-            <p className="text-xs text-white/40">Posting Company</p>
-            <p className="mt-1 font-semibold text-white">
-              {recruiterCompany.name}
-            </p>
+            <div className="flex items-center gap-3">
+              {company?.logoUrl ? (
+                <img
+                  src={company.logoUrl}
+                  alt={company.name}
+                  className="h-10 w-10 rounded-xl border border-white/10 object-cover"
+                />
+              ) : (
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-black/25">
+                  <FiBriefcase className="h-5 w-5 text-white/45" />
+                </div>
+              )}
+
+              <div>
+                <p className="text-xs text-white/40">Posting Company</p>
+                <p className="mt-1 font-semibold text-white">
+                  {company?.name || "No company found"}
+                </p>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -583,27 +631,70 @@ const PostJobForm = ({ company }) => {
 
               <Fieldset.Group className="mt-6">
                 <div className="rounded-2xl border border-white/10 bg-black/25 p-5">
-                  <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
-                    <div>
-                      <p className="text-sm text-white/45">
-                        Auto-filled company
-                      </p>
+                  <div className="flex flex-col justify-between gap-5 md:flex-row md:items-center">
+                    <div className="flex items-start gap-4">
+                      {company?.logoUrl ? (
+                        <img
+                          src={company.logoUrl}
+                          alt={company.name}
+                          className="h-16 w-16 rounded-2xl border border-white/10 bg-black object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-white/10 bg-white/6">
+                          <FiBriefcase className="h-7 w-7 text-white/45" />
+                        </div>
+                      )}
 
-                      <h3 className="mt-1 text-lg font-semibold text-white">
-                        {recruiterCompany.name}
-                      </h3>
+                      <div>
+                        <p className="text-sm text-white/45">
+                          Auto-filled company
+                        </p>
 
-                      <p className="mt-2 text-sm text-white/45">
-                        This job will be linked to this company profile.
-                      </p>
+                        <h3 className="mt-1 text-xl font-semibold text-white">
+                          {company?.name || "No company found"}
+                        </h3>
+
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          <CompanyInfoPill>
+                            {company?.industryLabel ||
+                              company?.industry ||
+                              "Industry not set"}
+                          </CompanyInfoPill>
+
+                          <CompanyInfoPill>
+                            {company?.employeeCountLabel ||
+                              company?.employeeCount ||
+                              "Company size not set"}
+                          </CompanyInfoPill>
+
+                          <CompanyInfoPill>
+                            {company?.location || "Location not set"}
+                          </CompanyInfoPill>
+                        </div>
+
+                        {company?.websiteUrl && (
+                          <a
+                            href={company.websiteUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="mt-3 inline-flex items-center gap-2 text-sm text-violet-300 transition hover:text-violet-200"
+                          >
+                            <FiGlobe className="h-4 w-4" />
+                            {company.websiteUrl}
+                          </a>
+                        )}
+
+                        <p className="mt-3 max-w-2xl text-sm leading-6 text-white/45">
+                          This job will be linked to your recruiter company
+                          profile.
+                        </p>
+                      </div>
                     </div>
 
                     <div
-                      className={`inline-flex w-fit items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold uppercase ${
-                        isCompanyApproved
-                          ? "bg-green-500/15 text-green-300"
-                          : "bg-red-500/15 text-red-300"
-                      }`}
+                      className={`inline-flex w-fit items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold uppercase ${getCompanyStatusStyles(
+                        companyStatus
+                      )}`}
                     >
                       {isCompanyApproved ? (
                         <FiCheckCircle className="h-4 w-4" />
@@ -611,7 +702,7 @@ const PostJobForm = ({ company }) => {
                         <FiAlertCircle className="h-4 w-4" />
                       )}
 
-                      {isCompanyApproved ? "Approved" : "Not Approved"}
+                      {companyStatus}
                     </div>
                   </div>
 
@@ -699,6 +790,39 @@ const PostJobForm = ({ company }) => {
                   ))}
                 </div>
               )}
+
+              {company?.name && (
+                <div className="mt-6 border-t border-white/10 pt-5">
+                  <p className="text-xs uppercase tracking-[0.18em] text-white/30">
+                    Company
+                  </p>
+
+                  <div className="mt-3 flex items-center gap-3">
+                    {company?.logoUrl ? (
+                      <img
+                        src={company.logoUrl}
+                        alt={company.name}
+                        className="h-10 w-10 rounded-xl border border-white/10 object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/6">
+                        <FiBriefcase className="h-5 w-5 text-white/45" />
+                      </div>
+                    )}
+
+                    <div>
+                      <p className="font-semibold text-white">
+                        {company.name}
+                      </p>
+                      <p className="text-xs text-white/40">
+                        {company?.industryLabel ||
+                          company?.industry ||
+                          "Company"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             <p className="mt-5 text-sm leading-6 text-white/40">
@@ -709,6 +833,14 @@ const PostJobForm = ({ company }) => {
         </div>
       </div>
     </section>
+  );
+};
+
+const CompanyInfoPill = ({ children }) => {
+  return (
+    <span className="rounded-full border border-white/10 bg-white/6 px-3 py-1 text-xs font-medium text-white/60">
+      {children}
+    </span>
   );
 };
 
