@@ -297,7 +297,7 @@ const InfoCard = ({ icon, label, value }) => {
         {label}
       </p>
 
-      <p className="mt-2 break-words text-sm font-semibold text-white">
+      <p className="mt-2 wrap-break-word text-sm font-semibold text-white">
         {value || "Not specified"}
       </p>
     </div>

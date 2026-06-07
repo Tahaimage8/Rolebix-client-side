@@ -1,10 +1,10 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { CircleCheck } from "@gravity-ui/icons";
 import {
@@ -32,8 +32,15 @@ const initialFormData = {
   role: "seeker",
 };
 
-const SignUpPage = () => {
+const SignUpPageContent = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const rawRedirect = searchParams.get("redirect");
+  const redirectTo =
+    rawRedirect && rawRedirect.startsWith("/") && !rawRedirect.startsWith("//")
+      ? rawRedirect
+      : "/";
 
   /* Form state */
   const [formData, setFormData] = useState(initialFormData);
@@ -150,7 +157,7 @@ const SignUpPage = () => {
       setFormData(initialFormData);
 
       setTimeout(() => {
-        router.push("/auth/signin");
+        router.push(`/auth/signin?redirect=${encodeURIComponent(redirectTo)}`);
       }, 900);
     } catch (error) {
       toast.error(error?.message || "Something went wrong.");
@@ -229,7 +236,7 @@ const SignUpPage = () => {
             <p className="mt-2 text-sm text-white/45">
               Already have an account?{" "}
               <Link
-                href="/auth/signin"
+                href={`/auth/signin?redirect=${encodeURIComponent(redirectTo)}`}
                 className="font-medium text-violet-300 transition hover:text-violet-200"
               >
                 Sign in
@@ -339,7 +346,7 @@ const SignUpPage = () => {
           {/* Bottom sign in link */}
           <div className="mt-6 flex items-center justify-center">
             <Link
-              href="/auth/signin"
+              href={`/auth/signin?redirect=${encodeURIComponent(redirectTo)}`}
               className="text-sm text-white/45 transition hover:text-white"
             >
               Go back to sign in
@@ -495,6 +502,24 @@ const RoleSelector = ({ value, onChange }) => {
         })}
       </div>
     </div>
+  );
+};
+
+const SignUpLoading = () => {
+  return (
+    <main className="flex min-h-screen items-center justify-center bg-black px-4 text-white">
+      <div className="rounded-3xl border border-white/10 bg-white/6 px-6 py-4 text-sm text-white/60">
+        Loading create account...
+      </div>
+    </main>
+  );
+};
+
+const SignUpPage = () => {
+  return (
+    <Suspense fallback={<SignUpLoading />}>
+      <SignUpPageContent />
+    </Suspense>
   );
 };
 

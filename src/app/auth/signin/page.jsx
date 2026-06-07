@@ -1,12 +1,11 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { motion } from "motion/react";
-
 import CircleCheck from "@gravity-ui/icons/CircleCheck";
 import {
   FiMail,
@@ -25,8 +24,14 @@ const initialFormData = {
   password: "",
 };
 
-const SignInPage = () => {
-  const router = useRouter();
+const SignInPageContent = () => {
+  const searchParams = useSearchParams();
+
+  const rawRedirect = searchParams.get("redirect");
+  const redirectTo =
+    rawRedirect && rawRedirect.startsWith("/") && !rawRedirect.startsWith("//")
+      ? rawRedirect
+      : "/";
 
   const [formData, setFormData] = useState(initialFormData);
   const [isLoading, setIsLoading] = useState(false);
@@ -85,6 +90,8 @@ const SignInPage = () => {
 
     if (!validateForm()) return;
 
+    let shouldKeepLoading = false;
+
     try {
       setIsLoading(true);
 
@@ -100,18 +107,22 @@ const SignInPage = () => {
       }
 
       if (data) {
+        shouldKeepLoading = true;
+
         showAlert("success", "Signed in successfully. Redirecting...");
 
         setFormData(initialFormData);
 
         setTimeout(() => {
-          window.location.href = "/";
+          window.location.replace(redirectTo);
         }, 900);
       }
     } catch (error) {
       showAlert("error", error?.message || "Something went wrong.");
     } finally {
-      setIsLoading(false);
+      if (!shouldKeepLoading) {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -354,7 +365,7 @@ const SignInPage = () => {
             >
               Don&apos;t have an account?{" "}
               <Link
-                href="/auth/register"
+                href={`/auth/register?redirect=${encodeURIComponent(redirectTo)}`}
                 className="font-medium text-violet-300 transition hover:text-violet-200"
               >
                 Create account
@@ -493,7 +504,7 @@ const SignInPage = () => {
           >
             <motion.div whileHover={{ y: -1 }} whileTap={{ scale: 0.98 }}>
               <Link
-                href="/auth/register"
+                href={`/auth/register?redirect=${encodeURIComponent(redirectTo)}`}
                 className="text-sm text-white/45 transition hover:text-white"
               >
                 Go back to create account
@@ -656,6 +667,24 @@ const PasswordField = ({
         </motion.button>
       </motion.div>
     </motion.label>
+  );
+};
+
+const SignInLoading = () => {
+  return (
+    <main className="flex min-h-screen items-center justify-center bg-black px-4 text-white">
+      <div className="rounded-3xl border border-white/10 bg-white/6 px-6 py-4 text-sm text-white/60">
+        Loading sign in...
+      </div>
+    </main>
+  );
+};
+
+const SignInPage = () => {
+  return (
+    <Suspense fallback={<SignInLoading />}>
+      <SignInPageContent />
+    </Suspense>
   );
 };
 
