@@ -4,8 +4,53 @@ import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import { getJobById } from "@/lib/api/jobs";
 import JobApply from "./JobApply";
-import { FiArrowLeft } from "react-icons/fi";
+import {
+  FiArrowLeft,
+  FiBriefcase,
+  FiLock,
+  FiCheckCircle,
+  FiZap,
+} from "react-icons/fi";
 import { getApplicationByApplicant } from "@/lib/api/application";
+
+const getJobId = (job) => {
+  if (typeof job?._id === "string") return job._id;
+  if (job?._id?.$oid) return job._id.$oid;
+  return job?.id || "";
+};
+
+const getId = (value) => {
+  if (!value) return "";
+  if (typeof value === "string") return value;
+  if (value?.$oid) return value.$oid;
+  return String(value);
+};
+
+const isSameMonth = (date) => {
+  if (!date) return false;
+
+  const applicationDate = new Date(date);
+  const now = new Date();
+
+  return (
+    applicationDate.getMonth() === now.getMonth() &&
+    applicationDate.getFullYear() === now.getFullYear()
+  );
+};
+
+const getUniqueApplicationsByJob = (applications = []) => {
+  const map = new Map();
+
+  applications.forEach((application) => {
+    const jobId = getId(application?.jobId);
+
+    if (jobId && !map.has(jobId)) {
+      map.set(jobId, application);
+    }
+  });
+
+  return [...map.values()];
+};
 
 const ApplyPage = async ({ params }) => {
   const { id } = await params;
@@ -57,13 +102,36 @@ const ApplyPage = async ({ params }) => {
     );
   }
 
-  const applications = (await getApplicationByApplicant(user.id)) || [];
-
   const job = await getJobById(id);
 
   if (!job) {
     notFound();
   }
+
+  const applications = (await getApplicationByApplicant(user.id)) || [];
+
+  const plan = {
+    name: "Free",
+    maxApplicationsPerMonth: 3,
+  };
+
+  const jobId = getJobId(job);
+
+  const monthlyApplications = applications.filter((application) =>
+    isSameMonth(application?.createdAt)
+  );
+
+  const uniqueMonthlyApplications =
+    getUniqueApplicationsByJob(monthlyApplications);
+
+  const alreadyApplied = applications.some(
+    (application) => getId(application?.jobId) === getId(jobId)
+  );
+
+  const hasApplicationLimit =
+    uniqueMonthlyApplications.length >= plan.maxApplicationsPerMonth;
+
+  const canApply = !alreadyApplied && !hasApplicationLimit;
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-black px-4 py-10 text-white sm:px-6 lg:px-8">
@@ -82,13 +150,81 @@ const ApplyPage = async ({ params }) => {
           </Link>
 
           <h2 className="inline-flex w-fit items-center gap-2 rounded-full border border-white/10 bg-white/6 px-3 py-1 text-sm font-medium text-white/55">
-            You have applied to {applications.length} jobs so far
+            {uniqueMonthlyApplications.length}/{plan.maxApplicationsPerMonth}{" "}
+            applications used on your {plan.name} plan
           </h2>
         </div>
 
-        <JobApply applicant={user} job={job} />
+        {canApply && <JobApply applicant={user} job={job} />}
+
+        {alreadyApplied && (
+          <ApplicationNotice
+            icon={<FiCheckCircle />}
+            title="You already applied for this job"
+            description="Your application has already been submitted for this role. You can browse other jobs and apply to a new opportunity."
+            actionText="Browse More Jobs"
+            actionHref="/jobs"
+            type="success"
+          />
+        )}
+
+        {!alreadyApplied && hasApplicationLimit && (
+          <ApplicationNotice
+            icon={<FiLock />}
+            title="Application limit reached"
+            description={`You have reached the ${plan.maxApplicationsPerMonth} applications limit on your ${plan.name} plan. To apply for more jobs this month, please upgrade your plan.`}
+            actionText="Upgrade Plan"
+            actionHref="/pricing"
+            type="warning"
+          />
+        )}
       </section>
     </main>
+  );
+};
+
+const ApplicationNotice = ({
+  icon,
+  title,
+  description,
+  actionText,
+  actionHref,
+  type = "warning",
+}) => {
+  const styles =
+    type === "success"
+      ? "border-green-500/20 bg-green-500/10 text-green-300"
+      : "border-yellow-500/20 bg-yellow-500/10 text-yellow-300";
+
+  return (
+    <div className="mx-auto max-w-2xl rounded-[32px] border border-white/10 bg-[#111111]/90 p-8 text-center shadow-2xl shadow-black/50 backdrop-blur-xl">
+      <div
+        className={`mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border text-2xl ${styles}`}
+      >
+        {icon}
+      </div>
+
+      <h1 className="mt-6 text-3xl font-semibold tracking-tight text-white">
+        {title}
+      </h1>
+
+      <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-white/55">
+        {description}
+      </p>
+
+      <Link
+        href={actionHref}
+        className="mt-7 inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-white px-6 text-sm font-semibold text-black transition hover:bg-white/90"
+      >
+        {type === "warning" ? (
+          <FiZap className="h-4 w-4" />
+        ) : (
+          <FiBriefcase className="h-4 w-4" />
+        )}
+
+        {actionText}
+      </Link>
+    </div>
   );
 };
 
