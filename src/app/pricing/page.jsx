@@ -35,6 +35,7 @@ const pricingLinks = {
 const seekerPlans = [
   {
     name: "Free",
+    id: "seeker_Free",
     price: "$0",
     duration: "forever",
     description: "A simple way to explore Rolebix and start applying.",
@@ -52,9 +53,11 @@ const seekerPlans = [
   },
   {
     name: "Pro",
+    id: "seeker_Pro",
     price: "$19",
     duration: "month",
-    description: "For active job seekers who want better tracking and insights.",
+    description:
+      "For active job seekers who want better tracking and insights.",
     badge: "Most popular",
     highlighted: true,
     href: pricingLinks.seekerPro,
@@ -69,6 +72,7 @@ const seekerPlans = [
   },
   {
     name: "Premium",
+    id: "seeker_Premium",
     price: "$39",
     duration: "month",
     description: "For serious candidates who want stronger visibility.",
@@ -89,6 +93,7 @@ const seekerPlans = [
 const recruiterPlans = [
   {
     name: "Free",
+    id: "recruiter_Free",
     price: "$0",
     duration: "forever",
     description: "Perfect for a company posting its first few roles.",
@@ -106,6 +111,7 @@ const recruiterPlans = [
   },
   {
     name: "Growth",
+     id: "recruiter_Growth",
     price: "$49",
     duration: "month",
     description: "For growing teams that need better applicant tracking.",
@@ -123,6 +129,7 @@ const recruiterPlans = [
   },
   {
     name: "Enterprise",
+     id: "recruiter_Enterprise",
     price: "$149",
     duration: "month",
     description: "For companies hiring across multiple roles and teams.",
@@ -327,19 +334,9 @@ const PricingPage = () => {
           </p>
 
           <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-            <Link
-              href={pricingLinks.bottomPrimary}
-              className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-white px-6 text-sm font-semibold text-black transition hover:bg-white/90"
-            >
-              Get started
-              <FiArrowRight className="h-4 w-4" />
-            </Link>
 
-            <Link
-              href={pricingLinks.bottomSecondary}
-              className="inline-flex h-12 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.06] px-6 text-sm font-semibold text-white transition hover:bg-white/[0.1]"
-            >
-              Browse jobs
+            <Link href={"#"} className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-white px-6 text-sm font-semibold text-black transition hover:bg-white/90">
+            Here
             </Link>
           </div>
         </section>
@@ -406,24 +403,21 @@ const PricingCard = ({ plan }) => {
         ))}
       </ul>
 
-      <Link
-        href={plan.href}
-        className={`mt-auto flex h-12 items-center justify-center gap-2 rounded-2xl text-sm font-semibold transition ${
-          plan.highlighted
-            ? "bg-white text-black hover:bg-white/90"
-            : "border border-white/10 bg-white/[0.06] text-white hover:bg-white/[0.1]"
-        }`}
-      >
-        {plan.cta}
-        <FiArrowRight className="h-4 w-4" />
-      </Link>
+            <form action="/api/checkout_sessions"  className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-white px-6 text-sm font-semibold text-black transition hover:bg-white/90" method="POST">
+            <input type="hidden" name="plan_id" value={plan.id} />
+              <section>
+                <button type="submit" role="link">
+                  Checkout
+                </button>
+              </section>
+            </form> 
     </div>
   );
 };
 
 const TrustItem = ({ icon, title, description }) => {
   return (
-    <div className="flex gap-4 rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+    <div className="flex gap-4 rounded-2xl border border-white/10 bg-white/4 p-4">
       <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-black/20 text-violet-200">
         {icon}
       </div>
@@ -431,9 +425,7 @@ const TrustItem = ({ icon, title, description }) => {
       <div>
         <h3 className="text-sm font-semibold text-white">{title}</h3>
 
-        <p className="mt-1 text-sm leading-6 text-white/45">
-          {description}
-        </p>
+        <p className="mt-1 text-sm leading-6 text-white/45">{description}</p>
       </div>
     </div>
   );
@@ -449,9 +441,7 @@ const FaqItem = ({ faq, index }) => {
         onClick={() => setIsOpen((prev) => !prev)}
         className="flex w-full items-center justify-between gap-4 px-5 py-5 text-left"
       >
-        <span className="text-sm font-semibold text-white">
-          {faq.question}
-        </span>
+        <span className="text-sm font-semibold text-white">{faq.question}</span>
 
         <FiChevronDown
           className={`h-4 w-4 shrink-0 text-white/50 transition ${

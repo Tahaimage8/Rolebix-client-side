@@ -137,7 +137,7 @@ const SignUpPageContent = () => {
 
     try {
       setIsLoading(true);
-
+      const plan = role ==="seeker" ? 'seeker_free' : "recruiter_free"
       const { data, error } = await authClient.signUp.email({
         name: formData.name.trim(),
         email: formData.email.trim(),
