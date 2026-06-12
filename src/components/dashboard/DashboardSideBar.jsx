@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useEffect, useState } from "react";
@@ -154,7 +155,7 @@ function SidebarContent({ user, pathname, loading, onNavigate }) {
           </p>
 
           <span
-            className={`text-[10px] px-2 py-[2px] rounded border inline-block mt-1 ${roleBadge[role]}`}
+            className={`text-[10px] px-2 py-0.5 rounded border inline-block mt-1 ${roleBadge[role]}`}
           >
             {role.toUpperCase()}
           </span>
