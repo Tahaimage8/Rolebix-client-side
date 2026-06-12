@@ -32,9 +32,16 @@ const navItemsByRole = {
 
   recruiter: [
     { icon: House, href: "/dashboard/recruiter", label: "Dashboard", exact: true },
-    { icon: Briefcase, href: "/dashboard/recruiter/company", label: "My Company" },
-    { icon: Bell, href: "/dashboard/recruiter/jobs/new", label: "Post A Job" },
-    { icon: Magnifier, href: "/dashboard/recruiter/jobs", label: "Manage Jobs" },
+
+    // 🔥 FIX 1 (added exact)
+    { icon: Briefcase, href: "/dashboard/recruiter/company", label: "My Company", exact: true },
+
+    // 🔥 FIX 2 (added exact to prevent overlap)
+    { icon: Bell, href: "/dashboard/recruiter/jobs/new", label: "Post A Job", exact: true },
+
+    // 🔥 FIX 3 (added exact to prevent overlap bug)
+    { icon: Magnifier, href: "/dashboard/recruiter/jobs", label: "Manage Jobs", exact: true },
+
     { icon: Envelope, href: "/dashboard/recruiter/applications", label: "Applications" },
     { icon: Person, href: "/dashboard/recruiter/profile", label: "Profile" },
     { icon: Gear, href: "/dashboard/recruiter/settings", label: "Settings" },
@@ -155,7 +162,7 @@ function SidebarContent({ user, pathname, loading, onNavigate }) {
           </p>
 
           <span
-            className={`text-[10px] px-2 py-0.5 rounded border inline-block mt-1 ${roleBadge[role]}`}
+            className={`text-[10px] px-2 py-[2px] rounded border inline-block mt-1 ${roleBadge[role]}`}
           >
             {role.toUpperCase()}
           </span>
@@ -167,7 +174,7 @@ function SidebarContent({ user, pathname, loading, onNavigate }) {
         {navItems.map((item) => {
           const Icon = item.icon;
 
-          /* 🔥 ONLY FIXED PART */
+          /* unchanged logic */
           const active = item.exact
             ? pathname === item.href
             : pathname === item.href || pathname.startsWith(item.href + "/");
