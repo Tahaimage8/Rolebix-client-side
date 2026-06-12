@@ -4,11 +4,11 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
 import { authClient } from "@/lib/auth-client";
 
-const navLinks = [
+const baseNavLinks = [
   {
     label: "Browse Jobs",
     href: "/jobs",
@@ -23,8 +23,13 @@ const navLinks = [
   },
 ];
 
+const dashboardLinks = {
+  seeker: "/dashboard/seeker",
+  recruiter: "/dashboard/recruiter",
+  admin: "/dashboard/admin",
+};
+
 const Navbar = () => {
-  const router = useRouter();
   const pathname = usePathname();
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -36,6 +41,18 @@ const Navbar = () => {
   const [sessionError, setSessionError] = useState("");
 
   const user = session?.user;
+  const role = user?.role;
+  const dashboardHref = dashboardLinks[role || "seeker"] || dashboardLinks.seeker;
+
+  const navLinks = user?.email
+    ? [
+        ...baseNavLinks,
+        {
+          label: "Dashboard",
+          href: dashboardHref,
+        },
+      ]
+    : baseNavLinks;
 
   const loadSession = async () => {
     try {
@@ -47,9 +64,6 @@ const Navbar = () => {
           disableCookieCache: true,
         },
       });
-
-      // console.log("SESSION DATA:", data);
-      // console.log("SESSION ERROR:", error);
 
       if (error) {
         setSession(null);
@@ -270,7 +284,7 @@ const Navbar = () => {
                           }}
                         >
                           <Link
-                            href="/dashboard"
+                            href={dashboardHref}
                             className="block rounded-xl px-4 py-3 text-sm text-white/70 transition hover:bg-white/6 hover:text-white"
                           >
                             Dashboard
@@ -347,7 +361,10 @@ const Navbar = () => {
                   </Link>
                 </motion.div>
 
-                <motion.div whileHover={{ y: -2, scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                <motion.div
+                  whileHover={{ y: -2, scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
                   <Link
                     href="/auth/register"
                     className="rounded-xl bg-linear-to-r from-[#7C5CFF] to-[#5B7CFF] px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-violet-500/25 transition hover:scale-[1.02] hover:shadow-violet-500/40"
@@ -476,8 +493,8 @@ const Navbar = () => {
                     }}
                   >
                     <Link
-                      href="/dashboard"
-                      className="rounded-xl px-4 py-3 text-sm font-medium text-white/70 transition hover:bg-white/5 hover:text-white"
+                      href={dashboardHref}
+                      className="block rounded-xl px-4 py-3 text-sm font-medium text-white/70 transition hover:bg-white/5 hover:text-white"
                     >
                       Dashboard
                     </Link>
@@ -491,7 +508,7 @@ const Navbar = () => {
                   >
                     <Link
                       href="/profile"
-                      className="rounded-xl px-4 py-3 text-sm font-medium text-white/70 transition hover:bg-white/5 hover:text-white"
+                      className="block rounded-xl px-4 py-3 text-sm font-medium text-white/70 transition hover:bg-white/5 hover:text-white"
                     >
                       My Profile
                     </Link>
@@ -536,7 +553,7 @@ const Navbar = () => {
                   >
                     <Link
                       href="/auth/signin"
-                      className="rounded-xl px-4 py-3 text-sm font-medium text-[#8B7CFF] transition hover:bg-white/5 hover:text-white"
+                      className="block rounded-xl px-4 py-3 text-sm font-medium text-[#8B7CFF] transition hover:bg-white/5 hover:text-white"
                     >
                       Sign In
                     </Link>
@@ -551,7 +568,7 @@ const Navbar = () => {
                   >
                     <Link
                       href="/auth/register"
-                      className="rounded-xl bg-linear-to-r from-[#7C5CFF] to-[#5B7CFF] px-5 py-3 text-center text-sm font-semibold text-white shadow-lg shadow-violet-500/25 transition hover:scale-[1.01]"
+                      className="block rounded-xl bg-linear-to-r from-[#7C5CFF] to-[#5B7CFF] px-5 py-3 text-center text-sm font-semibold text-white shadow-lg shadow-violet-500/25 transition hover:scale-[1.01]"
                     >
                       Get Started
                     </Link>
