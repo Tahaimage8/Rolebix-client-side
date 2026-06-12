@@ -130,41 +130,46 @@ const SignUpPageContent = () => {
   };
 
   /* Submit handler */
-  const handleSubmit = async (event) => {
-    event.preventDefault();
+const handleSubmit = async (event) => {
+  event.preventDefault();
 
-    if (!validateForm()) return;
+  if (!validateForm()) return;
 
-    try {
-      setIsLoading(true);
-      const plan = role ==="seeker" ? 'seeker_free' : "recruiter_free"
-      const { data, error } = await authClient.signUp.email({
-        name: formData.name.trim(),
-        email: formData.email.trim(),
-        password: formData.password,
-        image: formData.image.trim(),
-        role: formData.role,
-        callbackURL: "/",
-      });
+  try {
+    setIsLoading(true);
 
-      if (error) {
-        toast.error(error.message || "Signup failed. Please try again.");
-        return;
-      }
+    const selectedRole = formData.role;
+    const plan =
+      selectedRole === "seeker" ? "seeker_free" : "recruiter_free";
 
-      toast.success("Account created successfully.");
+    const { error } = await authClient.signUp.email({
+      name: formData.name.trim(),
+      email: formData.email.trim(),
+      password: formData.password,
+      image: formData.image.trim(),
+      role: selectedRole,
+      plan: plan,
+      callbackURL: "/",
+    });
 
-      setFormData(initialFormData);
-
-      setTimeout(() => {
-        router.push(`/auth/signin?redirect=${encodeURIComponent(redirectTo)}`);
-      }, 900);
-    } catch (error) {
-      toast.error(error?.message || "Something went wrong.");
-    } finally {
-      setIsLoading(false);
+    if (error) {
+      toast.error(error.message || "Signup failed. Please try again.");
+      return;
     }
-  };
+
+    toast.success("Account created successfully.");
+
+    setFormData(initialFormData);
+
+    setTimeout(() => {
+      router.push(`/auth/signin?redirect=${encodeURIComponent(redirectTo)}`);
+    }, 900);
+  } catch (error) {
+    toast.error(error?.message || "Something went wrong.");
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-black px-4 py-10 text-white sm:px-6 lg:px-8">

@@ -1,4 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 import { getUserSession } from "@/lib/core/session";
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
@@ -12,6 +15,7 @@ import {
   FiZap,
 } from "react-icons/fi";
 import { getApplicationByApplicant } from "@/lib/api/application";
+import { getPlanById } from "@/lib/api/plans";
 
 const getJobId = (job) => {
   if (typeof job?._id === "string") return job._id;
@@ -52,8 +56,11 @@ const getUniqueApplicationsByJob = (applications = []) => {
   return [...map.values()];
 };
 
-const ApplyPage = async ({ params }) => {
+const ApplyPage = async ({ params, searchParams }) => {
   const { id } = await params;
+  const currentSearchParams = await searchParams;
+
+  const appliedSuccess = currentSearchParams?.applied === "success";
 
   const user = await getUserSession();
 
@@ -110,10 +117,19 @@ const ApplyPage = async ({ params }) => {
 
   const applications = (await getApplicationByApplicant(user.id)) || [];
 
-  const plan = {
-    name: "Free",
-    maxApplicationsPerMonth: 3,
-  };
+  const plan = await getPlanById(user.plan || "seeker_free");
+
+  const isUnlimitedPlan = plan?.maxApplicationsPerMonth === "unlimited";
+
+  const maxApplicationsPerMonth = isUnlimitedPlan
+    ? Infinity
+    : Number(plan?.maxApplicationsPerMonth || 3);
+
+  const maxApplicationsLabel = isUnlimitedPlan
+    ? "Unlimited"
+    : maxApplicationsPerMonth;
+
+  const planName = plan?.name || "Free";
 
   const jobId = getJobId(job);
 
@@ -124,12 +140,15 @@ const ApplyPage = async ({ params }) => {
   const uniqueMonthlyApplications =
     getUniqueApplicationsByJob(monthlyApplications);
 
-  const alreadyApplied = applications.some(
+  const alreadyAppliedFromDB = applications.some(
     (application) => getId(application?.jobId) === getId(jobId)
   );
 
+  const alreadyApplied = alreadyAppliedFromDB || appliedSuccess;
+
   const hasApplicationLimit =
-    uniqueMonthlyApplications.length >= plan.maxApplicationsPerMonth;
+    !isUnlimitedPlan &&
+    uniqueMonthlyApplications.length >= maxApplicationsPerMonth;
 
   const canApply = !alreadyApplied && !hasApplicationLimit;
 
@@ -150,8 +169,8 @@ const ApplyPage = async ({ params }) => {
           </Link>
 
           <h2 className="inline-flex w-fit items-center gap-2 rounded-full border border-white/10 bg-white/6 px-3 py-1 text-sm font-medium text-white/55">
-            {uniqueMonthlyApplications.length}/{plan.maxApplicationsPerMonth}{" "}
-            applications used on your {plan.name} plan
+            {uniqueMonthlyApplications.length}/{maxApplicationsLabel}{" "}
+            applications used on your {planName} plan
           </h2>
         </div>
 
@@ -172,7 +191,7 @@ const ApplyPage = async ({ params }) => {
           <ApplicationNotice
             icon={<FiLock />}
             title="Application limit reached"
-            description={`You have reached the ${plan.maxApplicationsPerMonth} applications limit on your ${plan.name} plan. To apply for more jobs this month, please upgrade your plan.`}
+            description={`You have reached the ${maxApplicationsPerMonth} applications limit on your ${planName} plan. To apply for more jobs this month, please upgrade your plan.`}
             actionText="Upgrade Plan"
             actionHref="/pricing"
             type="warning"

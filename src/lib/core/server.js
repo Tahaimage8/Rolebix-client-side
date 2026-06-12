@@ -1,7 +1,9 @@
 const baseUri = process.env.NEXT_PUBLIC_BASE_URI;
 
 export const serverFetch = async (path) => {
-  const res = await fetch(`${baseUri}${path}`, {
+  const url = `${baseUri}${path}`;
+
+  const res = await fetch(url, {
     cache: "no-store",
   });
 
@@ -11,11 +13,20 @@ export const serverFetch = async (path) => {
     return null;
   }
 
-  return JSON.parse(text);
+  try {
+    return JSON.parse(text);
+  } catch (error) {
+    console.error("Invalid JSON response from:", url);
+    console.error("Response was:", text);
+
+    throw new Error("API did not return valid JSON.");
+  }
 };
 
 export const serverMutation = async (api, data) => {
-  const res = await fetch(`${baseUri}${api}`, {
+  const url = `${baseUri}${api}`;
+
+  const res = await fetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -29,5 +40,12 @@ export const serverMutation = async (api, data) => {
     return null;
   }
 
-  return JSON.parse(text);
+  try {
+    return JSON.parse(text);
+  } catch (error) {
+    console.error("Invalid JSON response from:", url);
+    console.error("Response was:", text);
+
+    throw new Error("API did not return valid JSON.");
+  }
 };

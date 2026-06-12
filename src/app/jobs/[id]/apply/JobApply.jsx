@@ -104,6 +104,11 @@ const JobApply = ({ applicant, job }) => {
 
     if (!validateForm()) return;
 
+    if (!jobId) {
+      toast.error("Job information is missing.");
+      return;
+    }
+
     try {
       setIsSubmitting(true);
 
@@ -135,13 +140,15 @@ const JobApply = ({ applicant, job }) => {
 
       const result = await CreateApplication(application);
 
-      if (result?.message && !result?.insertedId) {
+      if (result?.message && !result?.insertedId && !result?.acknowledged) {
         toast.error(result.message);
+        setIsSubmitting(false);
         return;
       }
 
       if (!result?.insertedId && !result?.acknowledged) {
         toast.error("Failed to submit application. Please try again.");
+        setIsSubmitting(false);
         return;
       }
 
@@ -154,9 +161,16 @@ const JobApply = ({ applicant, job }) => {
         resumeUrl: "",
         coverLetter: "",
       }));
+
+      const currentUrl = new URL(window.location.href);
+      currentUrl.searchParams.set("applied", "success");
+      currentUrl.searchParams.set("t", Date.now().toString());
+
+      setTimeout(() => {
+        window.location.replace(currentUrl.toString());
+      }, 600);
     } catch (error) {
       toast.error(error?.message || "Something went wrong.");
-    } finally {
       setIsSubmitting(false);
     }
   };
