@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useEffect, useState } from "react";
@@ -19,227 +18,187 @@ import {
 
 import { authClient } from "@/lib/auth-client";
 
-/* Recruiter sidebar links */
-const recruiterNavItems = [
-  { icon: House, href: "/dashboard/recruiter", label: "Dashboard" },
-  { icon: Briefcase, href: "/dashboard/recruiter/company", label: "My Company" },
-  { icon: Bell, href: "/dashboard/recruiter/jobs/new", label: "Post A Job" },
-  { icon: Magnifier, href: "/dashboard/recruiter/jobs", label: "Manage Jobs" },
-  { icon: Envelope, href: "/dashboard/recruiter/applications", label: "Applications" },
-  { icon: Person, href: "/dashboard/recruiter/profile", label: "Profile" },
-  { icon: Gear, href: "/dashboard/recruiter/settings", label: "Settings" },
-];
+/* NAV */
+const navItemsByRole = {
+  seeker: [
+    { icon: House, href: "/dashboard/seeker", label: "Dashboard", exact: true },
+    { icon: Magnifier, href: "/jobs", label: "Jobs" },
+    { icon: Briefcase, href: "/dashboard/seeker/applications", label: "Applications" },
+    { icon: Bell, href: "/dashboard/seeker/saved-jobs", label: "Saved Jobs" },
+    { icon: Person, href: "/dashboard/seeker/profile", label: "Profile" },
+    { icon: Gear, href: "/dashboard/seeker/settings", label: "Settings" },
+  ],
 
-/* Job seeker sidebar links */
-const seekerNavItems = [
-  { icon: House, href: "/dashboard/seeker", label: "Dashboard" },
-  { icon: Magnifier, href: "/jobs", label: "Browse Jobs" },
-  { icon: Briefcase, href: "/dashboard/seeker/applications", label: "My Applications" },
-  { icon: Bell, href: "/dashboard/seeker/saved-jobs", label: "Saved Jobs" },
-  { icon: Person, href: "/dashboard/seeker/profile", label: "Profile" },
-  { icon: Gear, href: "/dashboard/seeker/settings", label: "Settings" },
-];
+  recruiter: [
+    { icon: House, href: "/dashboard/recruiter", label: "Dashboard", exact: true },
+    { icon: Briefcase, href: "/dashboard/recruiter/company", label: "My Company" },
+    { icon: Bell, href: "/dashboard/recruiter/jobs/new", label: "Post A Job" },
+    { icon: Magnifier, href: "/dashboard/recruiter/jobs", label: "Manage Jobs" },
+    { icon: Envelope, href: "/dashboard/recruiter/applications", label: "Applications" },
+    { icon: Person, href: "/dashboard/recruiter/profile", label: "Profile" },
+    { icon: Gear, href: "/dashboard/recruiter/settings", label: "Settings" },
+  ],
 
-const DashboardSideBar = () => {
+  admin: [
+    { icon: House, href: "/dashboard/admin", label: "Dashboard", exact: true },
+    { icon: Person, href: "/dashboard/admin/users", label: "Users" },
+    { icon: Briefcase, href: "/dashboard/admin/companies", label: "Companies" },
+    { icon: Bell, href: "/dashboard/admin/jobs", label: "Jobs" },
+    { icon: Envelope, href: "/dashboard/admin/payments", label: "Payments" },
+    { icon: Gear, href: "/dashboard/admin/settings", label: "Settings" },
+  ],
+};
+
+export default function DashboardSidebar() {
   const pathname = usePathname();
 
-  /* Mobile sidebar open state */
-  const [isOpen, setIsOpen] = useState(false);
-
-  /* Session user state */
+  const [open, setOpen] = useState(false);
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  /* Session loading state */
-  const [isLoading, setIsLoading] = useState(true);
-
-  /* Get session data */
   useEffect(() => {
-    const getSessionData = async () => {
-      try {
-        const { data, error } = await authClient.getSession();
-
-        // console.log("SIDEBAR SESSION DATA:", data);
-        // console.log("SIDEBAR SESSION ERROR:", error);
-
-        if (error) {
-          setUser(null);
-          return;
-        }
-
-        setUser(data?.user || null);
-      } catch (error) {
-        console.log("Sidebar session error:", error);
-        setUser(null);
-      } finally {
-        setIsLoading(false);
-      }
+    const load = async () => {
+      const { data } = await authClient.getSession();
+      setUser(data?.user || null);
+      setLoading(false);
     };
-
-    getSessionData();
+    load();
   }, []);
-
-  const closeSidebar = () => setIsOpen(false);
 
   return (
     <>
-      {/* Mobile menu button */}
+      {/* MOBILE MENU BUTTON */}
       <button
-        type="button"
-        onClick={() => setIsOpen(true)}
-        className="fixed left-4 top-4 z-50 flex h-11 items-center gap-2 rounded-xl border border-white/10 bg-[#151515] px-4 text-sm font-medium text-white shadow-xl shadow-black/30 lg:hidden"
+        onClick={() => setOpen(true)}
+        className="fixed left-3 top-3 z-50 flex h-10 items-center gap-2 rounded-lg border border-white/10 bg-[#151515] px-3 text-sm text-white lg:hidden"
       >
-        <LayoutSideContentLeft className="h-5 w-5" />
+        <LayoutSideContentLeft className="h-4 w-4" />
         Menu
       </button>
 
-      {/* Desktop sidebar */}
-      <aside className="hidden min-h-screen w-72 shrink-0 border-r border-white/10 bg-[#111111] text-white lg:block">
-        <SidebarContent
-          user={user}
-          pathname={pathname}
-          isLoading={isLoading}
-        />
+      {/* DESKTOP SIDEBAR */}
+      <aside className="hidden lg:flex h-screen w-72 flex-col border-r border-white/10 bg-[#111] text-white">
+        <SidebarContent user={user} pathname={pathname} loading={loading} />
       </aside>
 
-      {/* Mobile sidebar drawer */}
-      {isOpen && (
-        <div className="fixed inset-0 z-60 lg:hidden">
-          {/* Overlay */}
-          <button
-            type="button"
-            aria-label="Close sidebar"
-            onClick={closeSidebar}
+      {/* MOBILE OVERLAY */}
+      {open && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          <div
+            onClick={() => setOpen(false)}
             className="absolute inset-0 bg-black/70"
           />
 
-          {/* Drawer */}
-          <aside className="relative h-full w-80 max-w-[86vw] border-r border-white/10 bg-[#111111] text-white shadow-2xl shadow-black">
+          <aside className="relative h-full w-72 bg-[#111] text-white flex flex-col">
             <SidebarContent
               user={user}
               pathname={pathname}
-              isLoading={isLoading}
-              onNavigate={closeSidebar}
+              loading={loading}
+              onNavigate={() => setOpen(false)}
             />
           </aside>
         </div>
       )}
     </>
   );
-};
+}
 
-const SidebarContent = ({ user, pathname, isLoading, onNavigate }) => {
-  const userName = user?.name || "Guest User";
-  const userEmail = user?.email || "";
-  const userImage = user?.image || "";
-  const userRole = user?.role || "seeker";
+/* ================= SIDEBAR ================= */
 
-  const isRecruiter = userRole === "recruiter";
+function SidebarContent({ user, pathname, loading, onNavigate }) {
+  const role = user?.role || "seeker";
+  const navItems = navItemsByRole[role] || [];
 
-  const roleLabel = isRecruiter ? "Recruiter" : "Job Seeker";
-  const accountLabel = isRecruiter ? "Recruiter Account" : "Seeker Account";
-  const navItems = isRecruiter ? recruiterNavItems : seekerNavItems;
+  const roleBadge = {
+    seeker: "text-sky-300 bg-sky-500/10 border-sky-400/20",
+    recruiter: "text-green-300 bg-green-500/10 border-green-400/20",
+    admin: "text-purple-300 bg-purple-500/10 border-purple-400/20",
+  };
+
+  const handleLogout = async () => {
+    await authClient.signOut();
+    window.location.href = "/auth/signin";
+  };
 
   return (
-    <div className="flex h-full min-h-screen flex-col px-6 py-7">
-      {/* Logo */}
-      <Link href="/" onClick={onNavigate} className="inline-flex items-center">
+    <div className="flex h-full flex-col px-5 py-6">
+
+      {/* LOGO */}
+      <Link href="/" onClick={onNavigate}>
         <Image
           src="/images/rolebix-logo.png"
-          alt="Rolebix Logo"
-          width={140}
-          height={42}
-          priority
-          className="h-9 w-auto object-contain"
+          width={130}
+          height={35}
+          alt="logo"
         />
       </Link>
 
-      {/* User profile */}
-      <div className="mt-10 flex items-center gap-4">
-        {/* User image */}
-        {userImage ? (
+      {/* USER */}
+      <div className="mt-8 flex items-center gap-3">
+
+        {user?.image ? (
           <img
-            src={userImage}
-            alt={userName}
-            className="h-11 w-11 rounded-full object-cover ring-2 ring-violet-400/30"
+            src={user.image}
+            className="h-9 w-9 rounded-full object-cover border border-white/20"
+            alt="avatar"
           />
         ) : (
-          <div className="flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-violet-500/15 text-sm font-semibold text-white">
-            {userName?.charAt(0)?.toUpperCase() || "U"}
+          <div className="h-9 w-9 rounded-full bg-white/10 flex items-center justify-center text-sm">
+            {user?.name?.charAt(0) || "U"}
           </div>
         )}
 
-        {/* User info */}
         <div className="min-w-0">
-          <h3 className="truncate text-base font-semibold text-white">
-            {isLoading ? "Loading..." : userName}
-          </h3>
-
-          <p className="truncate text-sm text-white/45">
-            {isLoading ? "Checking account..." : roleLabel}
+          <p className="text-sm font-medium truncate">
+            {loading ? "Loading..." : user?.name}
           </p>
 
-          {userEmail && (
-            <p className="max-w-40 truncate text-xs text-white/30">
-              {userEmail}
-            </p>
-          )}
+          <span
+            className={`text-[10px] px-2 py-[2px] rounded border inline-block mt-1 ${roleBadge[role]}`}
+          >
+            {role.toUpperCase()}
+          </span>
         </div>
       </div>
 
-      {/* Account badge */}
-      <div className="mt-3 inline-flex w-fit rounded-md border border-white/25 px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-white">
-        {accountLabel}
-      </div>
-
-      {/* Navigation */}
-      <nav className="mt-16 flex flex-col gap-2">
+      {/* NAV */}
+      <nav className="mt-10 flex flex-col gap-1 flex-1 overflow-auto">
         {navItems.map((item) => {
           const Icon = item.icon;
-          const isActive =
-            pathname === item.href || pathname.startsWith(`${item.href}/`);
+
+          /* 🔥 ONLY FIXED PART */
+          const active = item.exact
+            ? pathname === item.href
+            : pathname === item.href || pathname.startsWith(item.href + "/");
 
           return (
             <Link
               key={item.href}
               href={item.href}
               onClick={onNavigate}
-              className={`relative flex items-center gap-4 px-4 py-4 text-sm font-medium transition ${
-                isActive
-                  ? "bg-white/12 text-white"
-                  : "text-white/45 hover:bg-white/6 hover:text-white"
+              className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition ${
+                active
+                  ? "bg-white/10 text-white"
+                  : "text-white/50 hover:bg-white/5 hover:text-white"
               }`}
             >
-              {/* Nav icon */}
-              <Icon
-                className={`h-5 w-5 ${
-                  isActive ? "text-white" : "text-white/45"
-                }`}
-              />
-
-              {/* Nav label */}
-              <span>{item.label}</span>
-
-              {/* Active indicator */}
-              {isActive && (
-                <span className="absolute right-0 top-0 h-full w-1 bg-white" />
-              )}
+              <Icon className="h-4 w-4" />
+              {item.label}
             </Link>
           );
         })}
       </nav>
 
-      {/* Bottom text */}
-      <div className="mt-auto border-t border-white/10 pt-5">
-        <p className="text-xs leading-5 text-white/35">
-          Rolebix {roleLabel.toLowerCase()} workspace.
-          <br />
-          {isRecruiter
-            ? "Manage jobs, companies, and candidates."
-            : "Track applications, saved jobs, and profile."}
-        </p>
+      {/* LOGOUT */}
+      <div className="border-t border-white/10 pt-3 mt-3">
+        <button
+          onClick={handleLogout}
+          className="w-full rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-300 hover:bg-red-500/20 transition"
+        >
+          Logout
+        </button>
       </div>
+
     </div>
   );
-};
-
-export default DashboardSideBar;
+}
