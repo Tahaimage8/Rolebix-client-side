@@ -135,7 +135,7 @@ const JobApply = ({ applicant, job }) => {
         resumeUrl: formData.resumeUrl.trim(),
         coverLetter: formData.coverLetter.trim(),
 
-        status: "pending",
+        status: "applied",
       };
 
       const result = await CreateApplication(application);
