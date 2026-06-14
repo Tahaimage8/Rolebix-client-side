@@ -1,16 +1,10 @@
-import { getCompanies } from '@/lib/api/companies';
+import { getCompanies } from "@/lib/api/companies";
+import AdminCompaniesTable from "@/components/dashboard/admin/AdminCompaniesTable";
 
-import React from 'react';
+const AdminCompaniesPage = async () => {
+  const companies = await getCompanies();
 
-const AdminCompaniesPage = async() => {
-    const companies = await getCompanies()
-
-    console.log(companies)
-    return (
-        <div>
-            <h2>TotalCompanies : {companies.length}</h2>
-        </div>
-    );
+  return <AdminCompaniesTable companies={companies || []} />;
 };
 
 export default AdminCompaniesPage;

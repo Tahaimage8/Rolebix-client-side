@@ -23,11 +23,11 @@ export const serverFetch = async (path) => {
   }
 };
 
-export const serverMutation = async (api, data) => {
+export const serverMutation = async (api, data, method= "POST") => {
   const url = `${baseUri}${api}`;
 
   const res = await fetch(url, {
-    method: "POST",
+    method: method,
     headers: {
       "Content-Type": "application/json",
     },
