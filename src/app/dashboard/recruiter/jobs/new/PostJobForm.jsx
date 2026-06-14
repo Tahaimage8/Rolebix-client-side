@@ -1,5 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
+
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import {
@@ -130,9 +131,23 @@ const getCompanyId = (company) => {
   return company?.id || "";
 };
 
+/* Helper: normalize company status */
+const getNormalizedCompanyStatus = (status) => {
+  return status?.toLowerCase().trim() || "pending";
+};
+
+/* Helper: company status label */
+const getCompanyStatusLabel = (status) => {
+  const normalizedStatus = getNormalizedCompanyStatus(status);
+
+  if (normalizedStatus === "approved") return "Approved";
+  if (normalizedStatus === "rejected") return "Rejected";
+  return "Pending";
+};
+
 /* Helper: company status styles */
 const getCompanyStatusStyles = (status) => {
-  const normalizedStatus = status?.toLowerCase();
+  const normalizedStatus = getNormalizedCompanyStatus(status);
 
   if (normalizedStatus === "approved") {
     return "border-green-500/20 bg-green-500/10 text-green-300";
@@ -151,7 +166,11 @@ const PostJobForm = ({ company }) => {
   /* Company values */
   const companyId = getCompanyId(company);
   const companyStatus = company?.status || "Pending";
-  const isCompanyApproved = companyStatus.toLowerCase() === "approved";
+  const normalizedCompanyStatus = getNormalizedCompanyStatus(companyStatus);
+
+  const isCompanyApproved = normalizedCompanyStatus === "approved";
+  const isCompanyPending = normalizedCompanyStatus === "pending";
+  const isCompanyRejected = normalizedCompanyStatus === "rejected";
 
   /* Form state */
   const [formData, setFormData] = useState(initialFormData);
@@ -364,12 +383,11 @@ const PostJobForm = ({ company }) => {
         employeeCountLabel:
           company?.employeeCountLabel || company?.employeeCount || "",
         location: company?.location || "",
-        status: companyStatus,
+        status: normalizedCompanyStatus,
       },
       status,
       visibility: status === "active" ? "public" : "private",
     };
-    
   };
 
   /* Save draft */
@@ -465,21 +483,20 @@ const PostJobForm = ({ company }) => {
             </div>
           </div>
         </div>
-            {
-              company.status === "rejected" && (
-                <div>
-                  <RejectedCompanyAlert/>
-                </div>
-              )
-            }
-            {
-              company.status === "pending" && (
-                <div>
-                  <PendingCompanyAlert/>
-                </div>
-              )
-            }
-        {company.status === "approved" && (
+
+        {isCompanyRejected && (
+          <div>
+            <RejectedCompanyAlert />
+          </div>
+        )}
+
+        {isCompanyPending && (
+          <div>
+            <PendingCompanyAlert />
+          </div>
+        )}
+
+        {isCompanyApproved && (
           <div className="grid gap-6 xl:grid-cols-[1fr_360px]">
             {/* Main form */}
             <Form
@@ -743,7 +760,7 @@ const PostJobForm = ({ company }) => {
                       </div>
 
                       <div
-                        className={`inline-flex w-fit items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold uppercase ${getCompanyStatusStyles(
+                        className={`inline-flex w-fit items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold ${getCompanyStatusStyles(
                           companyStatus,
                         )}`}
                       >
@@ -753,7 +770,7 @@ const PostJobForm = ({ company }) => {
                           <FiAlertCircle className="h-4 w-4" />
                         )}
 
-                        {companyStatus}
+                        {getCompanyStatusLabel(companyStatus)}
                       </div>
                     </div>
 
