@@ -316,6 +316,9 @@ const CompanyProfile = ({ recruiter, recruiterCompany }) => {
     // console.log("CREATE COMPANY RESPONSE:", companyPayload);
 
     if (companyPayload?.insertedId) {
+      const SavedCompany = { ...company, _id: payload?.insertedId };
+      setCompany(SavedCompany);
+
       toast.success("Company profile created successfully.");
     }
 
@@ -328,14 +331,19 @@ const CompanyProfile = ({ recruiter, recruiterCompany }) => {
 
   /* Status style */
   const getStatusStyles = (status) => {
-    switch (status) {
-      case "Approved":
-        return "border-green-500/20 bg-green-500/10 text-green-300";
-      case "Rejected":
-        return "border-red-500/20 bg-red-500/10 text-red-300";
-      default:
-        return "border-yellow-500/20 bg-yellow-500/10 text-yellow-300";
+    const normalized = status?.toLowerCase();
+
+    if (normalized === "approved") {
+      return "border-green-500/20 bg-green-500/10 text-green-300";
     }
+
+    if (normalized === "rejected") {
+      return "border-red-500/20 bg-red-500/10 text-red-300";
+    }
+
+    // pending / default
+    return "border-yellow-500/20 bg-yellow-500/10 text-yellow-300";
+    
   };
 
   /* Empty company state */
