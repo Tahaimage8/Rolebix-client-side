@@ -61,3 +61,14 @@ export const serverMutation = async (api, data, method= "POST") => {
     throw new Error("API did not return valid JSON.");
   }
 };
+
+export const protectedFetch = async(path)=>{
+    const res = await fetch(`${baseUri}${path}`, 
+      {
+        headers: await authHeader()
+      }
+    )
+
+
+    return res.json()
+}
