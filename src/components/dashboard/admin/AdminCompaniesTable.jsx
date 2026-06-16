@@ -8,8 +8,8 @@ import { toast } from "react-toastify";
 import {
   FiAlertCircle,
   FiCheckCircle,
+  FiChevronDown,
   FiFilter,
-  FiPlus,
   FiSearch,
   FiXCircle,
 } from "react-icons/fi";
@@ -73,27 +73,45 @@ const getCompanyInitials = (name = "") => {
     .toUpperCase();
 };
 
+/* Status filter options */
+const statusFilterOptions = [
+  { id: "all", label: "All Status" },
+  { id: "pending", label: "Pending" },
+  { id: "approved", label: "Approved" },
+  { id: "rejected", label: "Rejected" },
+];
+
 const AdminCompaniesTable = ({ companies = [] }) => {
   const router = useRouter();
 
   const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [updatingCompanyId, setUpdatingCompanyId] = useState("");
   const [updatingAction, setUpdatingAction] = useState("");
 
   const isUpdating = Boolean(updatingCompanyId);
 
+  const activeStatusFilterLabel =
+    statusFilterOptions.find((option) => option.id === statusFilter)?.label ||
+    "Filter";
+
   const filteredCompanies = useMemo(() => {
     return companies.filter((company) => {
-      const search = searchTerm.toLowerCase();
+      const search = searchTerm.toLowerCase().trim();
+      const status = getNormalizedStatus(company.status);
 
-      return (
+      const matchesSearch =
         (company?.name || "").toLowerCase().includes(search) ||
         (company?.websiteUrl || "").toLowerCase().includes(search) ||
         (company?.industryLabel || "").toLowerCase().includes(search) ||
-        (company?.location || "").toLowerCase().includes(search)
-      );
+        (company?.location || "").toLowerCase().includes(search);
+
+      const matchesStatus = statusFilter === "all" || status === statusFilter;
+
+      return matchesSearch && matchesStatus;
     });
-  }, [companies, searchTerm]);
+  }, [companies, searchTerm, statusFilter]);
 
   const handleUpdateStatus = async (companyId, nextStatus) => {
     try {
@@ -160,15 +178,53 @@ const AdminCompaniesTable = ({ companies = [] }) => {
           </div>
 
           <div className="flex flex-col gap-3 sm:flex-row">
-            <Button className="h-11 rounded-xl border border-white/10 bg-white/5 px-5 text-sm font-semibold text-white transition hover:bg-white/10">
-              <FiFilter className="h-4 w-4" />
-              Filter
-            </Button>
+            {/* Status Filter Dropdown */}
+            <div className="relative">
+              <Button
+                type="button"
+                isDisabled={isUpdating}
+                onPress={() => setIsFilterOpen((prev) => !prev)}
+                className="h-11 rounded-xl border border-white/10 bg-white/5 px-5 text-sm font-semibold text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <FiFilter className="h-4 w-4" />
+                {activeStatusFilterLabel}
+                <FiChevronDown
+                  className={`h-4 w-4 transition ${
+                    isFilterOpen ? "rotate-180" : ""
+                  }`}
+                />
+              </Button>
 
-            <Button className="h-11 rounded-xl bg-white px-5 text-sm font-semibold text-black transition hover:bg-white/90">
-              <FiPlus className="h-4 w-4" />
-              Register New
-            </Button>
+              {isFilterOpen && (
+                <div className="absolute right-0 z-30 mt-2 w-48 overflow-hidden rounded-2xl border border-white/10 bg-[#1b1b1b] p-2 shadow-2xl shadow-black/40">
+                  {statusFilterOptions.map((option) => {
+                    const isActive = statusFilter === option.id;
+
+                    return (
+                      <button
+                        key={option.id}
+                        type="button"
+                        onClick={() => {
+                          setStatusFilter(option.id);
+                          setIsFilterOpen(false);
+                        }}
+                        className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm transition ${
+                          isActive
+                            ? "bg-violet-500/15 text-violet-200"
+                            : "text-white/60 hover:bg-white/5 hover:text-white"
+                        }`}
+                      >
+                        <span>{option.label}</span>
+
+                        {isActive && (
+                          <span className="h-2 w-2 rounded-full bg-violet-300" />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -194,10 +250,21 @@ const AdminCompaniesTable = ({ companies = [] }) => {
             />
           </div>
 
-          <div className="text-sm text-white/40">
-            Total companies:{" "}
-            <span className="font-semibold text-white">
-              {companies.length}
+          <div className="flex flex-wrap items-center gap-3 text-sm text-white/40">
+            <span>
+              Total companies:{" "}
+              <span className="font-semibold text-white">
+                {companies.length}
+              </span>
+            </span>
+
+            <span className="hidden h-1 w-1 rounded-full bg-white/20 sm:block" />
+
+            <span>
+              Showing:{" "}
+              <span className="font-semibold text-white">
+                {filteredCompanies.length}
+              </span>
             </span>
           </div>
         </div>
@@ -205,7 +272,7 @@ const AdminCompaniesTable = ({ companies = [] }) => {
         {/* Table card */}
         <div className="overflow-hidden rounded-3xl border border-white/10 bg-[#1b1b1b] shadow-2xl shadow-black/20">
           {filteredCompanies.length === 0 ? (
-            <div className="flex min-h-[320px] items-center justify-center p-8 text-center">
+            <div className="flex min-h-80 items-center justify-center p-8 text-center">
               <div>
                 <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-white/10 bg-white/6">
                   <FiAlertCircle className="h-6 w-6 text-white/45" />
@@ -216,7 +283,7 @@ const AdminCompaniesTable = ({ companies = [] }) => {
                 </h2>
 
                 <p className="mt-2 text-sm text-white/40">
-                  New recruiter company submissions will appear here.
+                  Try changing the status filter or search keyword.
                 </p>
               </div>
             </div>
@@ -231,6 +298,10 @@ const AdminCompaniesTable = ({ companies = [] }) => {
 
                     <th className="px-5 py-4 text-xs font-semibold uppercase tracking-[0.14em] text-white/35">
                       Industry
+                    </th>
+
+                    <th className="px-5 py-4 text-xs font-semibold uppercase tracking-[0.14em] text-white/35">
+                      Jobs
                     </th>
 
                     <th className="px-5 py-4 text-xs font-semibold uppercase tracking-[0.14em] text-white/35">
@@ -294,7 +365,7 @@ const AdminCompaniesTable = ({ companies = [] }) => {
                                 href={company?.websiteUrl}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="mt-1 block max-w-55 truncate text-xs text-white/40 transition hover:text-violet-300"
+                                className="mt-1 block max-w-[220px] truncate text-xs text-white/40 transition hover:text-violet-300"
                               >
                                 {company?.websiteUrl || "No website"}
                               </a>
@@ -308,6 +379,13 @@ const AdminCompaniesTable = ({ companies = [] }) => {
                             {company?.industryLabel ||
                               company?.industry ||
                               "Not set"}
+                          </span>
+                        </td>
+
+                        {/* Jobs */}
+                        <td className="px-5 py-4">
+                          <span className="rounded-full border border-white/10 bg-white/6 px-3 py-1 text-xs font-medium text-white/65">
+                            {company?.jobCount || 0}
                           </span>
                         </td>
 
