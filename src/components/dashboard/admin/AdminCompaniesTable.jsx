@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@heroui/react";
 import { toast } from "react-toastify";
@@ -84,6 +84,7 @@ const statusFilterOptions = [
 const AdminCompaniesTable = ({ companies = [] }) => {
   const router = useRouter();
 
+  const [companyList, setCompanyList] = useState(companies);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -92,12 +93,16 @@ const AdminCompaniesTable = ({ companies = [] }) => {
 
   const isUpdating = Boolean(updatingCompanyId);
 
+  useEffect(() => {
+    setCompanyList(companies);
+  }, [companies]);
+
   const activeStatusFilterLabel =
     statusFilterOptions.find((option) => option.id === statusFilter)?.label ||
     "Filter";
 
   const filteredCompanies = useMemo(() => {
-    return companies.filter((company) => {
+    return companyList.filter((company) => {
       const search = searchTerm.toLowerCase().trim();
       const status = getNormalizedStatus(company.status);
 
@@ -111,7 +116,25 @@ const AdminCompaniesTable = ({ companies = [] }) => {
 
       return matchesSearch && matchesStatus;
     });
-  }, [companies, searchTerm, statusFilter]);
+  }, [companyList, searchTerm, statusFilter]);
+
+  const updateTableStatus = (companyId, nextStatus) => {
+    setCompanyList((currentCompanies) =>
+      currentCompanies.map((company) => {
+        const currentCompanyId = getCompanyId(company);
+
+        if (currentCompanyId !== companyId) {
+          return company;
+        }
+
+        return {
+          ...company,
+          status: nextStatus,
+          updatedAt: new Date().toISOString(),
+        };
+      }),
+    );
+  };
 
   const handleUpdateStatus = async (companyId, nextStatus) => {
     try {
@@ -122,25 +145,38 @@ const AdminCompaniesTable = ({ companies = [] }) => {
         status: nextStatus,
       });
 
+      if (!result) {
+        toast.error("Company status update failed.");
+        return;
+      }
+
       if (result?.matchedCount === 0) {
         toast.error("Company not found.");
         return;
       }
 
-      if (result?.acknowledged === false) {
-        toast.error("Company status update failed.");
+      if (result?.acknowledged !== true) {
+        toast.error(result?.message || "Company status update failed.");
         return;
       }
 
+      updateTableStatus(companyId, nextStatus);
+
       if (nextStatus === "approved") {
-        toast.success("Company approved successfully.");
+        toast.success("Company approved successfully.", {
+          autoClose: 2500,
+        });
       }
 
       if (nextStatus === "rejected") {
-        toast.success("Company rejected successfully.");
+        toast.success("Company rejected successfully.", {
+          autoClose: 2500,
+        });
       }
 
-      router.refresh();
+      setTimeout(() => {
+        router.refresh();
+      }, 300);
     } catch (error) {
       toast.error(error?.message || "Failed to update company status.");
     } finally {
@@ -254,7 +290,7 @@ const AdminCompaniesTable = ({ companies = [] }) => {
             <span>
               Total companies:{" "}
               <span className="font-semibold text-white">
-                {companies.length}
+                {companyList.length}
               </span>
             </span>
 
@@ -385,7 +421,7 @@ const AdminCompaniesTable = ({ companies = [] }) => {
                         {/* Jobs */}
                         <td className="px-5 py-4">
                           <span className="rounded-full border border-white/10 bg-white/6 px-3 py-1 text-xs font-medium text-white/65">
-                            {company?.jobCount || 0}
+                            {company?.jobCount ?? 0}
                           </span>
                         </td>
 
@@ -482,7 +518,7 @@ const AdminCompaniesTable = ({ companies = [] }) => {
               </span>{" "}
               of{" "}
               <span className="font-semibold text-white">
-                {companies.length}
+                {companyList.length}
               </span>{" "}
               companies
             </p>
