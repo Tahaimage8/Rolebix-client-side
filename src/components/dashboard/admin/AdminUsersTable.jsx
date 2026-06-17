@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@heroui/react";
 import { toast } from "react-toastify";
@@ -111,14 +111,6 @@ const AdminUsersTable = ({ users = [], totalUsers = 0 }) => {
 
   const isUpdating = Boolean(updatingUserId) || isPending;
 
-  useEffect(() => {
-    setUserList(users);
-  }, [users]);
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, roleFilter]);
-
   const stats = useMemo(() => {
     const activeUsers = userList.filter((user) => !user?.banned).length;
     const recruiterUsers = userList.filter(
@@ -160,18 +152,29 @@ const AdminUsersTable = ({ users = [], totalUsers = 0 }) => {
   }, [userList, searchTerm, roleFilter]);
 
   const totalPages = Math.max(1, Math.ceil(filteredUsers.length / PAGE_SIZE));
+  const visiblePage = Math.min(currentPage, totalPages);
 
   const paginatedUsers = useMemo(() => {
-    const startIndex = (currentPage - 1) * PAGE_SIZE;
+    const startIndex = (visiblePage - 1) * PAGE_SIZE;
     const endIndex = startIndex + PAGE_SIZE;
 
     return filteredUsers.slice(startIndex, endIndex);
-  }, [filteredUsers, currentPage]);
+  }, [filteredUsers, visiblePage]);
 
   const fromCount =
-    filteredUsers.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
+    filteredUsers.length === 0 ? 0 : (visiblePage - 1) * PAGE_SIZE + 1;
 
-  const toCount = Math.min(currentPage * PAGE_SIZE, filteredUsers.length);
+  const toCount = Math.min(visiblePage * PAGE_SIZE, filteredUsers.length);
+
+  const handleSearchChange = (event) => {
+    setSearchTerm(event.target.value);
+    setCurrentPage(1);
+  };
+
+  const handleRoleFilterChange = (event) => {
+    setRoleFilter(event.target.value);
+    setCurrentPage(1);
+  };
 
   const handleRoleChange = async (userId, nextRole) => {
     try {
@@ -270,7 +273,7 @@ const AdminUsersTable = ({ users = [], totalUsers = 0 }) => {
                 type="text"
                 placeholder="Search by name or email..."
                 value={searchTerm}
-                onChange={(event) => setSearchTerm(event.target.value)}
+                onChange={handleSearchChange}
                 disabled={isUpdating}
                 className="h-11 w-full rounded-xl border border-white/10 bg-white/6 pl-11 pr-4 text-sm text-white outline-none transition placeholder:text-white/30 focus:border-violet-400/50 disabled:cursor-not-allowed disabled:opacity-50"
               />
@@ -278,7 +281,7 @@ const AdminUsersTable = ({ users = [], totalUsers = 0 }) => {
 
             <select
               value={roleFilter}
-              onChange={(event) => setRoleFilter(event.target.value)}
+              onChange={handleRoleFilterChange}
               disabled={isUpdating}
               className="h-11 rounded-xl border border-white/10 bg-[#1f1f1f] px-4 text-sm font-semibold text-white outline-none transition focus:border-violet-400/50 disabled:cursor-not-allowed disabled:opacity-50"
             >
@@ -555,8 +558,8 @@ const AdminUsersTable = ({ users = [], totalUsers = 0 }) => {
             <div className="flex items-center justify-end gap-2">
               <button
                 type="button"
-                disabled={currentPage === 1}
-                onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+                disabled={visiblePage === 1}
+                onClick={() => setCurrentPage(Math.max(1, visiblePage - 1))}
                 className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-white/60 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <FiChevronLeft className="h-4 w-4" />
@@ -569,7 +572,7 @@ const AdminUsersTable = ({ users = [], totalUsers = 0 }) => {
                   totalPages > 5 &&
                   page !== 1 &&
                   page !== totalPages &&
-                  Math.abs(page - currentPage) > 1
+                  Math.abs(page - visiblePage) > 1
                 ) {
                   if (page === 2 || page === totalPages - 1) {
                     return (
@@ -588,7 +591,7 @@ const AdminUsersTable = ({ users = [], totalUsers = 0 }) => {
                     type="button"
                     onClick={() => setCurrentPage(page)}
                     className={`h-9 min-w-9 rounded-lg px-3 text-sm font-semibold transition ${
-                      currentPage === page
+                      visiblePage === page
                         ? "bg-white text-black"
                         : "border border-white/10 bg-white/5 text-white/60 hover:bg-white/10"
                     }`}
@@ -600,9 +603,9 @@ const AdminUsersTable = ({ users = [], totalUsers = 0 }) => {
 
               <button
                 type="button"
-                disabled={currentPage === totalPages}
+                disabled={visiblePage === totalPages}
                 onClick={() =>
-                  setCurrentPage((page) => Math.min(totalPages, page + 1))
+                  setCurrentPage(Math.min(totalPages, visiblePage + 1))
                 }
                 className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-white/60 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
               >

@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 

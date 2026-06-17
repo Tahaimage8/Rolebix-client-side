@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@heroui/react";
 import { toast } from "react-toastify";
@@ -92,10 +92,6 @@ const AdminCompaniesTable = ({ companies = [] }) => {
   const [updatingAction, setUpdatingAction] = useState("");
 
   const isUpdating = Boolean(updatingCompanyId);
-
-  useEffect(() => {
-    setCompanyList(companies);
-  }, [companies]);
 
   const activeStatusFilterLabel =
     statusFilterOptions.find((option) => option.id === statusFilter)?.label ||

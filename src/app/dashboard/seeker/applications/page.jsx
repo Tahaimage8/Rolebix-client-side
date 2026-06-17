@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 import { getApplicationByApplicant } from "@/lib/api/application";
 import { getUserSession } from "@/lib/core/session";
 import { redirect } from "next/navigation";
