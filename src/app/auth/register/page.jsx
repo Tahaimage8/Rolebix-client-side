@@ -20,9 +20,9 @@ import {
 } from "react-icons/fi";
 
 import { authClient } from "@/lib/auth-client";
+import { updateSignupUserRole } from "@/lib/actions/signup";
 import { toast } from "react-toastify";
 
-/* Initial form data */
 const initialFormData = {
   name: "",
   email: "",
@@ -37,25 +37,18 @@ const SignUpPageContent = () => {
   const searchParams = useSearchParams();
 
   const rawRedirect = searchParams.get("redirect");
+
   const redirectTo =
     rawRedirect && rawRedirect.startsWith("/") && !rawRedirect.startsWith("//")
       ? rawRedirect
       : "/";
 
-  /* Form state */
   const [formData, setFormData] = useState(initialFormData);
-
-  /* Loading state */
   const [isLoading, setIsLoading] = useState(false);
-
-  /* Password visibility states */
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
-  /* Image preview error state */
   const [imageError, setImageError] = useState(false);
 
-  /* Input change handler */
   const handleChange = (event) => {
     const { name, value } = event.target;
 
@@ -69,7 +62,6 @@ const SignUpPageContent = () => {
     }
   };
 
-  /* Role change handler */
   const handleRoleChange = (role) => {
     setFormData((prev) => ({
       ...prev,
@@ -77,7 +69,6 @@ const SignUpPageContent = () => {
     }));
   };
 
-  /* Form validation */
   const validateForm = () => {
     const name = formData.name.trim();
     const email = formData.email.trim();
@@ -129,64 +120,68 @@ const SignUpPageContent = () => {
     return true;
   };
 
-  /* Submit handler */
-const handleSubmit = async (event) => {
-  event.preventDefault();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
 
-  if (!validateForm()) return;
+    if (!validateForm()) return;
 
-  try {
-    setIsLoading(true);
+    try {
+      setIsLoading(true);
 
-    const selectedRole = formData.role;
-    const plan =
-      selectedRole === "seeker" ? "seeker_free" : "recruiter_free";
+      const selectedRole = formData.role;
 
-    const { error } = await authClient.signUp.email({
-      name: formData.name.trim(),
-      email: formData.email.trim(),
-      password: formData.password,
-      image: formData.image.trim(),
-      role: selectedRole,
-      plan: plan,
-      callbackURL: "/",
-    });
+      const plan = selectedRole === "seeker" ? "seeker_free" : "recruiter_free";
 
-    if (error) {
-      toast.error(error.message || "Signup failed. Please try again.");
-      return;
+      const { error } = await authClient.signUp.email({
+        name: formData.name.trim(),
+        email: formData.email.trim(),
+        password: formData.password,
+        image: formData.image.trim(),
+        plan,
+        callbackURL: "/",
+      });
+
+      if (error) {
+        toast.error(error.message || "Signup failed. Please try again.");
+        return;
+      }
+
+      const roleUpdate = await updateSignupUserRole({
+        email: formData.email.trim(),
+        role: selectedRole,
+        plan,
+      });
+
+      if (!roleUpdate?.success) {
+        toast.error(roleUpdate?.message || "Role update failed.");
+        return;
+      }
+
+      toast.success("Account created successfully.");
+
+      setFormData(initialFormData);
+      setImageError(false);
+
+      setTimeout(() => {
+        router.push(`/auth/signin?redirect=${encodeURIComponent(redirectTo)}`);
+      }, 900);
+    } catch (error) {
+      toast.error(error?.message || "Something went wrong.");
+    } finally {
+      setIsLoading(false);
     }
-
-    toast.success("Account created successfully.");
-
-    setFormData(initialFormData);
-
-    setTimeout(() => {
-      router.push(`/auth/signin?redirect=${encodeURIComponent(redirectTo)}`);
-    }, 900);
-  } catch (error) {
-    toast.error(error?.message || "Something went wrong.");
-  } finally {
-    setIsLoading(false);
-  }
-};
+  };
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-black px-4 py-10 text-white sm:px-6 lg:px-8">
-      {/* Background */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(124,92,255,0.28),transparent_34%),linear-gradient(180deg,#181818_0%,#050505_55%,#000000_100%)]" />
 
-      {/* Background glow shape */}
       <div className="pointer-events-none absolute left-1/2 top-0 h-105 w-180 -translate-x-1/2 rounded-full bg-violet-600/15" />
 
-      {/* Background small glow shape */}
       <div className="pointer-events-none absolute right-10 top-28 h-56 w-56 rounded-full bg-[#7C5CFF]/10" />
 
-      {/* Main layout */}
       <section className="relative z-10 mx-auto grid min-h-[calc(100vh-80px)] max-w-6xl items-center gap-10 lg:grid-cols-[1fr_460px]">
-        {/* Left content */}
         <div className="hidden lg:block">
-          {/* Back to home link */}
           <Link
             href="/"
             className="inline-flex items-center gap-2 text-sm font-medium text-white/55 transition hover:text-white"
@@ -195,20 +190,16 @@ const handleSubmit = async (event) => {
             Back to home
           </Link>
 
-          {/* Left heading area */}
           <div className="mt-12">
-            {/* Badge */}
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/6 px-4 py-2 text-xs uppercase tracking-[0.2em] text-white/70">
               <CircleCheck className="h-4 w-4 text-violet-300" />
               Join Rolebix
             </div>
 
-            {/* Main heading */}
             <h1 className="max-w-xl text-5xl font-semibold tracking-tighter text-white lg:text-[70px] lg:leading-[0.98]">
               Create your career profile.
             </h1>
 
-            {/* Main description */}
             <p className="mt-6 max-w-lg text-base leading-8 text-white/55">
               Save jobs, apply faster, track your applications, and discover
               roles that match your skills.
@@ -216,11 +207,8 @@ const handleSubmit = async (event) => {
           </div>
         </div>
 
-        {/* Form card */}
         <div className="rounded-[32px] border border-white/10 bg-[#111111]/90 p-6 shadow-2xl shadow-black/50 sm:p-8">
-          {/* Form header */}
           <div className="mb-8 text-center">
-            {/* Logo */}
             <Link href="/" className="mb-6 inline-flex justify-center">
               <Image
                 src="/images/rolebix-logo.png"
@@ -232,12 +220,10 @@ const handleSubmit = async (event) => {
               />
             </Link>
 
-            {/* Form title */}
             <h2 className="text-3xl font-semibold tracking-tight text-white">
               Create account
             </h2>
 
-            {/* Sign in link */}
             <p className="mt-2 text-sm text-white/45">
               Already have an account?{" "}
               <Link
@@ -249,9 +235,7 @@ const handleSubmit = async (event) => {
             </p>
           </div>
 
-          {/* Registration form */}
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Name field */}
             <InputField
               icon={<FiUser />}
               label="Name"
@@ -262,7 +246,6 @@ const handleSubmit = async (event) => {
               onChange={handleChange}
             />
 
-            {/* Email field */}
             <InputField
               icon={<FiMail />}
               label="Email"
@@ -273,7 +256,6 @@ const handleSubmit = async (event) => {
               onChange={handleChange}
             />
 
-            {/* Image URL field */}
             <InputField
               icon={<FiImage />}
               label="Image URL"
@@ -284,7 +266,6 @@ const handleSubmit = async (event) => {
               onChange={handleChange}
             />
 
-            {/* Image preview */}
             {formData.image && !imageError && (
               <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/4 p-3">
                 <img
@@ -305,7 +286,6 @@ const handleSubmit = async (event) => {
               </div>
             )}
 
-            {/* Image error message */}
             {imageError && (
               <p className="text-sm text-red-400">
                 Image URL could not be loaded. Please use a valid direct image
@@ -313,7 +293,6 @@ const handleSubmit = async (event) => {
               </p>
             )}
 
-            {/* Password field */}
             <PasswordField
               label="Password"
               name="password"
@@ -324,7 +303,6 @@ const handleSubmit = async (event) => {
               onToggle={() => setShowPassword((prev) => !prev)}
             />
 
-            {/* Confirm password field */}
             <PasswordField
               label="Confirm Password"
               name="confirmPassword"
@@ -335,10 +313,8 @@ const handleSubmit = async (event) => {
               onToggle={() => setShowConfirmPassword((prev) => !prev)}
             />
 
-            {/* Role selection */}
             <RoleSelector value={formData.role} onChange={handleRoleChange} />
 
-            {/* Submit button */}
             <button
               type="submit"
               disabled={isLoading}
@@ -348,7 +324,6 @@ const handleSubmit = async (event) => {
             </button>
           </form>
 
-          {/* Bottom sign in link */}
           <div className="mt-6 flex items-center justify-center">
             <Link
               href={`/auth/signin?redirect=${encodeURIComponent(redirectTo)}`}
@@ -363,7 +338,6 @@ const handleSubmit = async (event) => {
   );
 };
 
-/* Reusable input field */
 const InputField = ({
   icon,
   label,
@@ -375,17 +349,13 @@ const InputField = ({
 }) => {
   return (
     <label className="block">
-      {/* Field label */}
       <span className="mb-2 block text-sm font-medium text-white/70">
         {label}
       </span>
 
-      {/* Field input wrapper */}
       <div className="flex h-14 items-center gap-3 rounded-2xl border border-white/10 bg-white/6 px-4 transition focus-within:border-violet-400/50 focus-within:bg-white/9">
-        {/* Field icon */}
         <span className="text-white/35 [&>svg]:h-4 [&>svg]:w-4">{icon}</span>
 
-        {/* Field input */}
         <input
           name={name}
           type={type}
@@ -399,7 +369,6 @@ const InputField = ({
   );
 };
 
-/* Reusable password field */
 const PasswordField = ({
   label,
   name,
@@ -411,17 +380,13 @@ const PasswordField = ({
 }) => {
   return (
     <label className="block">
-      {/* Password label */}
       <span className="mb-2 block text-sm font-medium text-white/70">
         {label}
       </span>
 
-      {/* Password input wrapper */}
       <div className="flex h-14 items-center gap-3 rounded-2xl border border-white/10 bg-white/6 px-4 transition focus-within:border-violet-400/50 focus-within:bg-white/9">
-        {/* Password icon */}
         <FiLock className="h-4 w-4 shrink-0 text-white/35" />
 
-        {/* Password input */}
         <input
           name={name}
           type={isVisible ? "text" : "password"}
@@ -431,7 +396,6 @@ const PasswordField = ({
           className="h-full w-full bg-transparent text-sm text-white outline-none placeholder:text-white/30"
         />
 
-        {/* Password show/hide button */}
         <button
           type="button"
           onClick={onToggle}
@@ -449,7 +413,6 @@ const PasswordField = ({
   );
 };
 
-/* Role selector */
 const RoleSelector = ({ value, onChange }) => {
   const roles = [
     {
@@ -466,13 +429,10 @@ const RoleSelector = ({ value, onChange }) => {
 
   return (
     <div className="space-y-3">
-      {/* Role selector label */}
       <p className="text-sm font-medium text-white/70">I&apos;m joining as</p>
 
-      {/* Hidden role input */}
       <input type="hidden" name="role" value={value} />
 
-      {/* Role buttons */}
       <div className="grid grid-cols-2 gap-3">
         {roles.map((role) => {
           const Icon = role.Icon;
@@ -489,7 +449,6 @@ const RoleSelector = ({ value, onChange }) => {
                   : "border-white/10 bg-white/6 text-white/55 hover:border-white/20 hover:text-white"
               }`}
             >
-              {/* Role icon */}
               <span
                 className={`flex h-9 w-9 items-center justify-center rounded-xl border transition ${
                   isSelected
@@ -500,7 +459,6 @@ const RoleSelector = ({ value, onChange }) => {
                 <Icon className="h-4 w-4" />
               </span>
 
-              {/* Role name */}
               <span className="text-sm font-semibold">{role.label}</span>
             </button>
           );
