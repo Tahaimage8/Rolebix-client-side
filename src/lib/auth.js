@@ -4,6 +4,7 @@
 import { betterAuth } from "better-auth";
 import { MongoClient } from "mongodb";
 import { mongodbAdapter } from "better-auth/adapters/mongodb";
+import { admin } from "better-auth/plugins";
 
 // const uri = env.process.MONGODB_URI;
 const uri = process.env.MONGODB_URI;
@@ -34,5 +35,8 @@ export const auth = betterAuth({
               default: "Seeker_Free",
             }
         }
-    }
+    },
+    plugins: [
+      admin()
+    ]
 });
