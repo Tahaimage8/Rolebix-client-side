@@ -1,6 +1,9 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+
 import {
   Button,
   Chip,
@@ -11,8 +14,18 @@ import {
   TextField,
 } from "@heroui/react";
 import { AnimatePresence, motion } from "framer-motion";
-import { FiBriefcase, FiFilter, FiRefreshCcw, FiSearch } from "react-icons/fi";
+import {
+  FiBriefcase,
+  FiChevronLeft,
+  FiChevronRight,
+  FiFilter,
+  FiRefreshCcw,
+  FiSearch,
+} from "react-icons/fi";
+
 import JobCard from "@/components/jobs/JobCard";
+
+const DEFAULT_LIMIT = 9;
 
 const categoryLabels = {
   design: "Design",
@@ -64,6 +77,7 @@ const workModeLabels = {
 const getJobId = (job) => {
   if (typeof job?._id === "string") return job._id;
   if (job?._id?.$oid) return job._id.$oid;
+
   return job?.id || job?.title;
 };
 
@@ -71,81 +85,199 @@ const getUniqueOptions = (jobs, getter) => {
   return [...new Set(jobs.map(getter).filter(Boolean))];
 };
 
-const JobsSearchFilter = ({ jobs = [] }) => {
-  const [search, setSearch] = useState("");
-  const [category, setCategory] = useState("all");
-  const [jobType, setJobType] = useState("all");
-  const [experience, setExperience] = useState("all");
-  const [workMode, setWorkMode] = useState("all");
-  const [company, setCompany] = useState("all");
+const buildJobsPath = (params = {}) => {
+  const query = new URLSearchParams();
 
-  const categories = useMemo(
-    () => getUniqueOptions(jobs, (job) => job.category),
-    [jobs]
+  query.set("page", params.page || "1");
+  query.set("limit", params.limit || String(DEFAULT_LIMIT));
+
+  if (params.search) {
+    query.set("search", params.search);
+  }
+
+  if (params.category && params.category !== "all") {
+    query.set("category", params.category);
+  }
+
+  if (params.type && params.type !== "all") {
+    query.set("type", params.type);
+  }
+
+  if (params.experienceLevel && params.experienceLevel !== "all") {
+    query.set("experienceLevel", params.experienceLevel);
+  }
+
+  if (params.workMode && params.workMode !== "all") {
+    query.set("workMode", params.workMode);
+  }
+
+  if (params.company && params.company !== "all") {
+    query.set("company", params.company);
+  }
+
+  return `/jobs?${query.toString()}`;
+};
+
+const JobsSearchFilter = ({ jobs = [], pagination = {}, filters = {} }) => {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+
+  const currentPage = Number(pagination?.page || 1);
+  const limit = Number(pagination?.limit || DEFAULT_LIMIT);
+  const totalJobs = Number(pagination?.totalJobs || jobs.length || 0);
+  const totalPages = Math.max(1, Number(pagination?.totalPages || 1));
+
+  const [search, setSearch] = useState(filters?.search || "");
+  const [category, setCategory] = useState(filters?.category || "all");
+  const [jobType, setJobType] = useState(filters?.type || "all");
+  const [experience, setExperience] = useState(
+    filters?.experienceLevel || "all",
   );
+  const [workMode, setWorkMode] = useState(filters?.workMode || "all");
+  const [company, setCompany] = useState(filters?.company || "all");
 
-  const jobTypes = useMemo(
-    () => getUniqueOptions(jobs, (job) => job.type),
-    [jobs]
-  );
+  useEffect(() => {
+    setSearch(filters?.search || "");
+    setCategory(filters?.category || "all");
+    setJobType(filters?.type || "all");
+    setExperience(filters?.experienceLevel || "all");
+    setWorkMode(filters?.workMode || "all");
+    setCompany(filters?.company || "all");
+  }, [filters]);
 
-  const experiences = useMemo(
-    () => getUniqueOptions(jobs, (job) => job.experienceLevel),
-    [jobs]
-  );
+  const currentPageCompanies = useMemo(() => {
+    const companies = getUniqueOptions(jobs, (job) => job.company?.name);
 
-  const workModes = useMemo(
-    () => getUniqueOptions(jobs, (job) => job.location?.type),
-    [jobs]
-  );
+    if (company !== "all" && company && !companies.includes(company)) {
+      return [company, ...companies];
+    }
 
-  const companies = useMemo(
-    () => getUniqueOptions(jobs, (job) => job.company?.name),
-    [jobs]
-  );
+    return companies;
+  }, [jobs, company]);
 
-  const filteredJobs = useMemo(() => {
-    const searchValue = search.toLowerCase().trim();
+  const paginationItems = useMemo(() => {
+    if (totalPages <= 5) {
+      return Array.from({ length: totalPages }, (_, index) => index + 1);
+    }
 
-    return jobs.filter((job) => {
-      const searchableText = [
-        job.title,
-        job.category,
-        job.type,
-        job.experienceLevel,
-        job.location?.display,
-        job.company?.name,
-        job.company?.industryLabel,
-        ...(job.skills || []),
-      ]
-        .join(" ")
-        .toLowerCase();
+    const items = [1];
 
-      const matchesSearch =
-        !searchValue || searchableText.includes(searchValue);
+    if (currentPage > 3) {
+      items.push("start-ellipsis");
+    }
 
-      const matchesCategory = category === "all" || job.category === category;
+    const startPage = Math.max(2, currentPage - 1);
+    const endPage = Math.min(totalPages - 1, currentPage + 1);
 
-      const matchesJobType = jobType === "all" || job.type === jobType;
+    for (let page = startPage; page <= endPage; page += 1) {
+      items.push(page);
+    }
 
-      const matchesExperience =
-        experience === "all" || job.experienceLevel === experience;
+    if (currentPage < totalPages - 2) {
+      items.push("end-ellipsis");
+    }
 
-      const matchesWorkMode =
-        workMode === "all" || job.location?.type === workMode;
+    items.push(totalPages);
 
-      const matchesCompany = company === "all" || job.company?.name === company;
+    return items;
+  }, [currentPage, totalPages]);
 
-      return (
-        matchesSearch &&
-        matchesCategory &&
-        matchesJobType &&
-        matchesExperience &&
-        matchesWorkMode &&
-        matchesCompany
-      );
+  const fromCount = totalJobs === 0 ? 0 : (currentPage - 1) * limit + 1;
+  const toCount = Math.min(currentPage * limit, totalJobs);
+
+  const scrollToResults = () => {
+    const resultsSection = document.getElementById("jobs-results");
+
+    if (resultsSection) {
+      resultsSection.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }
+  };
+
+  const updateJobsRoute = (nextParams = {}) => {
+    const path = buildJobsPath({
+      page: nextParams.page || "1",
+      limit,
+      search,
+      category,
+      type: jobType,
+      experienceLevel: experience,
+      workMode,
+      company,
+      ...nextParams,
     });
-  }, [jobs, search, category, jobType, experience, workMode, company]);
+
+    startTransition(() => {
+      router.push(path);
+    });
+
+    setTimeout(scrollToResults, 80);
+  };
+
+  const handleApplySearch = () => {
+    updateJobsRoute({
+      page: "1",
+      search: search.trim(),
+    });
+  };
+
+  const handlePageChange = (page) => {
+    updateJobsRoute({
+      page: String(page),
+    });
+  };
+
+  const handleCategoryChange = (value) => {
+    const nextValue = value || "all";
+    setCategory(nextValue);
+
+    updateJobsRoute({
+      page: "1",
+      category: nextValue,
+    });
+  };
+
+  const handleJobTypeChange = (value) => {
+    const nextValue = value || "all";
+    setJobType(nextValue);
+
+    updateJobsRoute({
+      page: "1",
+      type: nextValue,
+    });
+  };
+
+  const handleExperienceChange = (value) => {
+    const nextValue = value || "all";
+    setExperience(nextValue);
+
+    updateJobsRoute({
+      page: "1",
+      experienceLevel: nextValue,
+    });
+  };
+
+  const handleWorkModeChange = (value) => {
+    const nextValue = value || "all";
+    setWorkMode(nextValue);
+
+    updateJobsRoute({
+      page: "1",
+      workMode: nextValue,
+    });
+  };
+
+  const handleCompanyChange = (value) => {
+    const nextValue = value || "all";
+    setCompany(nextValue);
+
+    updateJobsRoute({
+      page: "1",
+      company: nextValue,
+    });
+  };
 
   const resetFilters = () => {
     setSearch("");
@@ -154,6 +286,12 @@ const JobsSearchFilter = ({ jobs = [] }) => {
     setExperience("all");
     setWorkMode("all");
     setCompany("all");
+
+    startTransition(() => {
+      router.push("/jobs?page=1&limit=9");
+    });
+
+    setTimeout(scrollToResults, 80);
   };
 
   return (
@@ -195,7 +333,7 @@ const JobsSearchFilter = ({ jobs = [] }) => {
               variant="soft"
               className="w-fit border border-white/10 bg-white/6 text-white/70"
             >
-              {filteredJobs.length} of {jobs.length} jobs
+              {totalJobs} matched jobs
             </Chip>
           </div>
 
@@ -213,6 +351,11 @@ const JobsSearchFilter = ({ jobs = [] }) => {
                 <InputGroup.Input
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      handleApplySearch();
+                    }
+                  }}
                   placeholder="Search title, company, skills..."
                   className="bg-transparent text-sm text-white outline-none placeholder:text-white/30"
                 />
@@ -224,12 +367,12 @@ const JobsSearchFilter = ({ jobs = [] }) => {
               value={category}
               items={[
                 { id: "all", label: "All Categories" },
-                ...categories.map((item) => ({
-                  id: item,
-                  label: categoryLabels[item] || item,
+                ...Object.entries(categoryLabels).map(([id, label]) => ({
+                  id,
+                  label,
                 })),
               ]}
-              onChange={setCategory}
+              onChange={handleCategoryChange}
             />
 
             <FilterSelect
@@ -237,12 +380,12 @@ const JobsSearchFilter = ({ jobs = [] }) => {
               value={jobType}
               items={[
                 { id: "all", label: "All Types" },
-                ...jobTypes.map((item) => ({
-                  id: item,
-                  label: typeLabels[item] || item,
+                ...Object.entries(typeLabels).map(([id, label]) => ({
+                  id,
+                  label,
                 })),
               ]}
-              onChange={setJobType}
+              onChange={handleJobTypeChange}
             />
 
             <FilterSelect
@@ -250,27 +393,27 @@ const JobsSearchFilter = ({ jobs = [] }) => {
               value={experience}
               items={[
                 { id: "all", label: "All Levels" },
-                ...experiences.map((item) => ({
-                  id: item,
-                  label: experienceLabels[item] || item,
+                ...Object.entries(experienceLabels).map(([id, label]) => ({
+                  id,
+                  label,
                 })),
               ]}
-              onChange={setExperience}
+              onChange={handleExperienceChange}
             />
           </div>
 
-          <div className="mt-4 grid gap-4 md:grid-cols-[1fr_1fr_auto]">
+          <div className="mt-4 grid gap-4 md:grid-cols-[1fr_1fr_auto_auto]">
             <FilterSelect
               label="Work Mode"
               value={workMode}
               items={[
                 { id: "all", label: "All Work Modes" },
-                ...workModes.map((item) => ({
-                  id: item,
-                  label: workModeLabels[item] || item,
+                ...Object.entries(workModeLabels).map(([id, label]) => ({
+                  id,
+                  label,
                 })),
               ]}
-              onChange={setWorkMode}
+              onChange={handleWorkModeChange}
             />
 
             <FilterSelect
@@ -278,17 +421,30 @@ const JobsSearchFilter = ({ jobs = [] }) => {
               value={company}
               items={[
                 { id: "all", label: "All Companies" },
-                ...companies.map((item) => ({
+                ...currentPageCompanies.map((item) => ({
                   id: item,
                   label: item,
                 })),
               ]}
-              onChange={setCompany}
+              onChange={handleCompanyChange}
             />
 
             <div className="flex items-end">
               <Button
                 type="button"
+                isLoading={isPending}
+                onPress={handleApplySearch}
+                className="h-12 w-full rounded-xl bg-white px-5 text-sm font-semibold text-black transition hover:bg-white/90 md:w-auto"
+              >
+                <FiSearch className="h-4 w-4" />
+                Search
+              </Button>
+            </div>
+
+            <div className="flex items-end">
+              <Button
+                type="button"
+                isDisabled={isPending}
                 onPress={resetFilters}
                 className="h-12 w-full rounded-xl border border-white/10 bg-white/5 px-5 text-sm font-semibold text-white transition hover:bg-white/10 md:w-auto"
               >
@@ -304,53 +460,165 @@ const JobsSearchFilter = ({ jobs = [] }) => {
               Active filters:
             </span>
 
-            <ActiveFilter label="Search" value={search} />
-            <ActiveFilter label="Category" value={category} hiddenValue="all" />
-            <ActiveFilter label="Type" value={jobType} hiddenValue="all" />
+            <ActiveFilter label="Search" value={filters?.search} />
             <ActiveFilter
-              label="Experience"
-              value={experience}
+              label="Category"
+              value={filters?.category}
               hiddenValue="all"
             />
-            <ActiveFilter label="Mode" value={workMode} hiddenValue="all" />
-            <ActiveFilter label="Company" value={company} hiddenValue="all" />
+            <ActiveFilter
+              label="Type"
+              value={filters?.type}
+              hiddenValue="all"
+            />
+
+            <ActiveFilter
+              label="Experience"
+              value={filters?.experienceLevel}
+              hiddenValue="all"
+            />
+
+            <ActiveFilter
+              label="Mode"
+              value={filters?.workMode}
+              hiddenValue="all"
+            />
+            <ActiveFilter
+              label="Company"
+              value={filters?.company}
+              hiddenValue="all"
+            />
           </div>
         </motion.div>
 
+        {/* Results meta */}
+        <div
+          id="jobs-results"
+          className="mb-5 flex flex-col justify-between gap-3 rounded-2xl border border-white/10 bg-white/3 px-4 py-3 sm:flex-row sm:items-center"
+        >
+          <div>
+            <p className="text-sm font-medium text-white">
+              Showing <span className="text-violet-200">{fromCount}</span> to{" "}
+              <span className="text-violet-200">{toCount}</span> of{" "}
+              <span className="text-violet-200">{totalJobs}</span> matched jobs
+            </p>
+
+            <p className="mt-1 text-xs text-white/35">
+              Page {currentPage} of {totalPages}
+            </p>
+          </div>
+
+          <div className="inline-flex w-fit items-center gap-2 rounded-full border border-violet-400/20 bg-violet-500/10 px-3 py-1 text-xs font-semibold text-violet-200">
+            <FiBriefcase className="h-4 w-4" />
+            {limit} jobs per page
+          </div>
+        </div>
+
         {/* Jobs grid */}
-        {filteredJobs.length > 0 ? (
-          <motion.div layout className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-            <AnimatePresence mode="popLayout">
-              {filteredJobs.map((job, index) => (
-                <motion.div
-                  key={getJobId(job)}
-                  layout
-                  initial={{
-                    opacity: 0,
-                    y: 24,
-                    scale: 0.98,
-                  }}
-                  animate={{
-                    opacity: 1,
-                    y: 0,
-                    scale: 1,
-                  }}
-                  exit={{
-                    opacity: 0,
-                    y: 16,
-                    scale: 0.98,
-                  }}
-                  transition={{
-                    duration: 0.28,
-                    delay: Math.min(index * 0.025, 0.18),
-                    ease: [0.22, 1, 0.36, 1],
-                  }}
-                >
-                  <JobCard job={job} />
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          </motion.div>
+        {jobs.length > 0 ? (
+          <>
+            <motion.div layout className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+              <AnimatePresence mode="popLayout">
+                {jobs.map((job, index) => (
+                  <motion.div
+                    key={getJobId(job)}
+                    layout
+                    initial={{
+                      opacity: 0,
+                      y: 24,
+                      scale: 0.98,
+                    }}
+                    animate={{
+                      opacity: 1,
+                      y: 0,
+                      scale: 1,
+                    }}
+                    exit={{
+                      opacity: 0,
+                      y: 16,
+                      scale: 0.98,
+                    }}
+                    transition={{
+                      duration: 0.28,
+                      delay: Math.min(index * 0.025, 0.18),
+                      ease: [0.22, 1, 0.36, 1],
+                    }}
+                  >
+                    <JobCard job={job} />
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </motion.div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="mt-8 flex flex-col items-center justify-between gap-4 rounded-2xl border border-white/10 bg-[#1b1b1b] px-4 py-4 sm:flex-row">
+                <p className="text-sm text-white/40">
+                  Page{" "}
+                  <span className="font-semibold text-white">
+                    {currentPage}
+                  </span>{" "}
+                  of{" "}
+                  <span className="font-semibold text-white">
+                    {totalPages}
+                  </span>
+                </p>
+
+                <div className="flex flex-wrap items-center justify-center gap-2">
+                  <button
+                    type="button"
+                    disabled={currentPage === 1 || isPending}
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    className="flex h-10 items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 text-sm font-semibold text-white/60 transition hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    <FiChevronLeft className="h-4 w-4" />
+                    Prev
+                  </button>
+
+                  {paginationItems.map((item) => {
+                    if (typeof item === "string") {
+                      return (
+                        <span
+                          key={item}
+                          className="flex h-10 items-center px-1 text-sm text-white/35"
+                        >
+                          ...
+                        </span>
+                      );
+                    }
+
+                    const isActive = currentPage === item;
+
+                    return (
+                      <button
+                        key={item}
+                        type="button"
+                        disabled={isPending}
+                        onClick={() => handlePageChange(item)}
+                        className={`h-10 min-w-10 rounded-xl px-3 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${
+                          isActive
+                            ? "bg-white text-black"
+                            : "border border-white/10 bg-white/5 text-white/60 hover:bg-white/10 hover:text-white"
+                        }`}
+                      >
+                        {item}
+                      </button>
+                    );
+                  })}
+
+                  <button
+                    type="button"
+                    disabled={currentPage === totalPages || isPending}
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    className="flex h-10 items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 text-sm font-semibold text-white/60 transition hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    Next
+                    <FiChevronRight className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
         ) : (
           <motion.div
             initial={{

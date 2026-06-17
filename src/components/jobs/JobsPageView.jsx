@@ -28,7 +28,7 @@ const fadeUpVariant = {
   },
 };
 
-const JobsPageView = ({ jobs = [] }) => {
+const JobsPageView = ({ jobs = [], pagination = {}, filters = {} }) => {
   const remoteJobs = jobs.filter((job) => job?.location?.type === "remote");
 
   const companies = [
@@ -83,7 +83,7 @@ const JobsPageView = ({ jobs = [] }) => {
             <JobsStatCard
               icon={<FiBriefcase />}
               label="Active Jobs"
-              value={jobs.length}
+              value={pagination?.totalJobs || jobs.length}
             />
 
             <JobsStatCard
@@ -102,7 +102,11 @@ const JobsPageView = ({ jobs = [] }) => {
       </section>
 
       {/* Jobs Search + Cards */}
-      <JobsSearchFilter jobs={jobs} />
+      <JobsSearchFilter
+        jobs={jobs}
+        pagination={pagination}
+        filters={filters}
+      />
     </main>
   );
 };
