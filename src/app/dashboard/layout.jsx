@@ -7,7 +7,7 @@ const DashboardLayout = ({ children }) => {
       <DashboardSideBar />
 
       {/* Main dashboard area */}
-      <main className="min-w-0 flex-1 overflow-x-hidden">
+      <main className="min-w-0 flex-1 overflow-x-hidden p-10">
         {children}
       </main>
     </section>
