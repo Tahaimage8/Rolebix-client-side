@@ -311,12 +311,7 @@ const Navbar = () => {
                             visible: { opacity: 1, x: 0 },
                           }}
                         >
-                          <Link
-                            href="/applications"
-                            className="block rounded-xl px-4 py-3 text-sm text-white/70 transition hover:bg-white/6 hover:text-white"
-                          >
-                            My Applications
-                          </Link>
+
                         </motion.div>
 
                         <motion.button
