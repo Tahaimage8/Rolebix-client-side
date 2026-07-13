@@ -1,16 +1,17 @@
 import CtaSection from "@/components/CtaSection";
 import FeaturesSection from "@/components/FeaturesSection";
 import HeroSection from "@/components/HeroSection";
+import HowRolebixWorksSection from "@/components/HowRolebixWorksSection";
 import PricingSection from "@/components/PricingSection";
-import Image from "next/image";
 
 export default function Home() {
   return (
-  <main>
-    <HeroSection />
-    <FeaturesSection/>
-    <PricingSection/>
-    <CtaSection/>
-  </main>
+    <main className="overflow-hidden bg-black text-white">
+      <HeroSection />
+      <FeaturesSection />
+      <HowRolebixWorksSection />
+      <PricingSection />
+      <CtaSection />
+    </main>
   );
 }
