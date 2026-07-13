@@ -1,140 +1,289 @@
-/* eslint-disable @next/next/no-img-element */
-import { getApplicationByApplicant } from "@/lib/api/application";
+import { Table } from "@heroui/react";
+import { getSeekerApplications } from "@/lib/api/seekerApplications";
 import { getUserSession } from "@/lib/core/session";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 
-const ApplicationsPage = async () => {
-  const user = await getUserSession();
-
-  if (!user?.id) {
-    redirect("/auth/signin");
-  }
-
-  const jobs = await getApplicationByApplicant(user.id);
-
-  const totalApplications = jobs?.length || 0;
-
-  return (
-    <div className="p-6 text-white">
-      {/* HEADER */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold">My Applications</h1>
-
-        <p className="text-sm text-white/50">Track all your applied jobs</p>
-
-        {/* TOTAL COUNT CARD */}
-        <div className="mt-4 inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2">
-          <span className="text-sm text-white/60">Total Applications:</span>
-
-          <span className="text-lg font-semibold text-white">
-            {totalApplications}
-          </span>
-        </div>
-      </div>
-
-      {/* TABLE */}
-      <div className="w-full overflow-x-auto rounded-xl border border-white/10 bg-[#111]">
-        <table className="w-full text-left text-white">
-          {/* HEADER */}
-          <thead className="border-b border-white/10 text-sm text-white/70">
-            <tr>
-              <th className="p-3">JOB</th>
-              <th className="p-3">COMPANY</th>
-              <th className="p-3">TYPE</th>
-              <th className="p-3">LOCATION</th>
-              <th className="p-3">STATUS</th>
-              <th className="p-3">DETAILS</th>
-            </tr>
-          </thead>
-
-          {/* BODY */}
-          <tbody>
-            {totalApplications === 0 ? (
-              <tr>
-                <td colSpan="6" className="p-6 text-center text-white/40">
-                  No applications found
-                </td>
-              </tr>
-            ) : (
-              jobs?.map((item) => (
-                <tr
-                  key={item._id || item.id}
-                  className="border-b border-white/5 hover:bg-white/5"
-                >
-                  {/* JOB */}
-                  <td className="p-3">
-                    <p className="font-medium">{item.jobTitle}</p>
-                    <p className="text-xs text-white/40">{item.jobCategory}</p>
-                  </td>
-
-                  {/* COMPANY */}
-                  <td className="p-3">
-                    <div className="flex items-center gap-2">
-                      {item.companyLogoUrl && (
-                        <img
-                          src={item.companyLogoUrl}
-                          className="h-6 w-6 rounded-full"
-                          alt="logo"
-                        />
-                      )}
-                      <span>{item.companyName}</span>
-                    </div>
-                  </td>
-
-                  {/* TYPE */}
-                  <td className="p-3 text-white/70">{item.jobType}</td>
-
-                  {/* LOCATION */}
-                  <td className="p-3 text-white/70">{item.companyLocation}</td>
-
-                  {/* STATUS */}
-                  <td className="p-3">
-                    <StatusBadge status={item.status} />
-                  </td>
-
-                  {/* DETAILS LINK */}
-                  <td className="p-3">
-                    <Link
-                      href={`/dashboard/seeker/applications/${item._id || item.id}`}
-                    >
-                      <button className="px-3 py-1 text-xs rounded bg-blue-500/10 text-blue-300 border border-blue-400/30 hover:bg-blue-500/20 transition">
-                        Details
-                      </button>
-                    </Link>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
+const STATUS_CONFIG = {
+  applied: {
+    label: "Applied",
+    className: "border-blue-400/30 bg-blue-500/10 text-blue-300",
+  },
+  reviewing: {
+    label: "Reviewing",
+    className: "border-amber-400/30 bg-amber-500/10 text-amber-300",
+  },
+  shortlisted: {
+    label: "Shortlisted",
+    className: "border-violet-400/30 bg-violet-500/10 text-violet-300",
+  },
+  interview: {
+    label: "Interview",
+    className: "border-cyan-400/30 bg-cyan-500/10 text-cyan-300",
+  },
+  hired: {
+    label: "Hired",
+    className: "border-emerald-400/30 bg-emerald-500/10 text-emerald-300",
+  },
+  rejected: {
+    label: "Rejected",
+    className: "border-red-400/30 bg-red-500/10 text-red-300",
+  },
 };
 
-export default ApplicationsPage;
+const normalizeStatus = (status) => {
+  const value = String(status || "applied").toLowerCase();
 
-/* ================= STATUS BADGE ================= */
+  if (value === "pending" || value === "new") return "applied";
+  if (value === "approved") return "shortlisted";
+  if (value === "accepted") return "hired";
+  if (value === "interviewing") return "interview";
 
-const StatusBadge = ({ status = "pending" }) => {
-  const s = status.toLowerCase();
+  return STATUS_CONFIG[value] ? value : "applied";
+};
 
-  const styles = {
-    pending: "bg-yellow-500/10 text-yellow-300 border-yellow-400/30",
-    approved: "bg-green-500/10 text-green-300 border-green-400/30",
-    accepted: "bg-green-500/10 text-green-300 border-green-400/30",
-    rejected: "bg-red-500/10 text-red-300 border-red-400/30",
-    cancelled: "bg-red-500/10 text-red-300 border-red-400/30",
-  };
+const StatusBadge = ({ status }) => {
+  const normalizedStatus = normalizeStatus(status);
+  const config = STATUS_CONFIG[normalizedStatus];
 
   return (
     <span
-      className={`px-2 py-1 text-xs rounded border font-medium capitalize ${
-        styles[s] || styles.pending
+      className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${
+        config.className
       }`}
     >
-      {s}
+      {config.label}
     </span>
   );
 };
+
+const getId = (value) => {
+  if (!value) return "";
+  if (typeof value === "string") return value;
+  if (value?.$oid) return value.$oid;
+  return String(value);
+};
+
+const getJobTitle = (item) =>
+  item?.job?.title || item?.jobTitle || item?.position || "Untitled job";
+
+const getJobCategory = (item) =>
+  item?.job?.category || item?.jobCategory || "Not specified";
+
+const getCompanyName = (item) =>
+  item?.job?.company?.name || item?.companyName || "Company unavailable";
+
+const getJobType = (item) =>
+  item?.job?.type || item?.jobType || "Not specified";
+
+const getLocation = (item) =>
+  item?.job?.location?.display ||
+  item?.job?.location?.city ||
+  item?.companyLocation ||
+  "Not specified";
+
+const formatDate = (date) => {
+  if (!date) return "Not available";
+
+  const parsedDate = new Date(date);
+
+  if (Number.isNaN(parsedDate.getTime())) {
+    return "Not available";
+  }
+
+  return parsedDate.toLocaleDateString("en-US", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+};
+
+const ApplicationsPage = async () => {
+  const user = await getUserSession();
+  const userId = user?.id || user?._id;
+
+  if (!userId) {
+    redirect("/auth/signin");
+  }
+
+  let applications = [];
+  let errorMessage = "";
+
+  try {
+    const result = await getSeekerApplications(userId);
+    applications = Array.isArray(result) ? result : result?.applications || [];
+  } catch (error) {
+    console.error("Seeker applications page error:", error);
+    errorMessage =
+      error?.message || "Your applications could not be loaded.";
+  }
+
+  const totalApplications = applications.length;
+  const activeApplications = applications.filter(
+    (item) =>
+      !["hired", "rejected"].includes(normalizeStatus(item?.status)),
+  ).length;
+  const interviewCount = applications.filter(
+    (item) => normalizeStatus(item?.status) === "interview",
+  ).length;
+  const hiredCount = applications.filter(
+    (item) => normalizeStatus(item?.status) === "hired",
+  ).length;
+
+  return (
+    <section className="space-y-6 p-1 text-white sm:p-2">
+      <div>
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/40">
+          Seeker workspace
+        </p>
+        <h1 className="mt-2 text-3xl font-bold tracking-tight">
+          My Applications
+        </h1>
+        <p className="mt-2 text-sm text-white/50">
+          Track every job application and follow the latest hiring status.
+        </p>
+      </div>
+
+      {errorMessage ? (
+        <div className="rounded-2xl border border-red-400/20 bg-red-500/10 p-4 text-sm text-red-200">
+          {errorMessage}
+        </div>
+      ) : null}
+
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard label="Total applications" value={totalApplications} />
+        <StatCard label="Active applications" value={activeApplications} />
+        <StatCard label="Interview stage" value={interviewCount} />
+        <StatCard label="Hired" value={hiredCount} />
+      </div>
+
+      {totalApplications === 0 && !errorMessage ? (
+        <div className="flex min-h-80 flex-col items-center justify-center rounded-2xl border border-white/10 bg-white/[0.03] p-8 text-center">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-xl">
+            0
+          </div>
+
+          <h2 className="mt-5 text-xl font-semibold">
+            No applications found
+          </h2>
+
+          <p className="mt-2 max-w-md text-sm leading-6 text-white/45">
+            Apply to a job first. Your submitted applications will appear
+            here automatically.
+          </p>
+
+          <Link
+            href="/jobs"
+            className="mt-5 inline-flex h-10 items-center justify-center rounded-xl bg-white px-4 text-sm font-semibold text-black transition hover:bg-white/90"
+          >
+            Browse jobs
+          </Link>
+        </div>
+      ) : null}
+
+      {totalApplications > 0 ? (
+        <div className="overflow-hidden rounded-2xl border border-white/10 bg-[#111]">
+          <div className="flex items-center justify-between gap-4 border-b border-white/10 px-5 py-4">
+            <div>
+              <h2 className="font-semibold">Application history</h2>
+              <p className="mt-1 text-xs text-white/40">
+                {totalApplications} application
+                {totalApplications === 1 ? "" : "s"} found
+              </p>
+            </div>
+
+            <Link
+              href="/jobs"
+              className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-white/70 transition hover:bg-white/10 hover:text-white"
+            >
+              Find more jobs
+            </Link>
+          </div>
+
+          <Table className="w-full">
+            <Table.ScrollContainer>
+              <Table.Content aria-label="My job applications">
+                <Table.Header>
+                  <Table.Column id="job" isRowHeader>
+                    JOB
+                  </Table.Column>
+                  <Table.Column id="company">COMPANY</Table.Column>
+                  <Table.Column id="type">TYPE</Table.Column>
+                  <Table.Column id="location">LOCATION</Table.Column>
+                  <Table.Column id="applied">APPLIED</Table.Column>
+                  <Table.Column id="status">STATUS</Table.Column>
+                  <Table.Column id="details">DETAILS</Table.Column>
+                </Table.Header>
+
+                <Table.Body>
+                  {applications.map((item) => {
+                    const applicationId = getId(item?._id || item?.id);
+
+                    return (
+                      <Table.Row id={applicationId} key={applicationId}>
+                        <Table.Cell className="min-w-60 py-4">
+                          <div>
+                            <p className="font-semibold text-white">
+                              {getJobTitle(item)}
+                            </p>
+                            <p className="mt-1 text-xs text-white/40">
+                              {getJobCategory(item)}
+                            </p>
+                          </div>
+                        </Table.Cell>
+
+                        <Table.Cell className="min-w-44 py-4 text-white/75">
+                          {getCompanyName(item)}
+                        </Table.Cell>
+
+                        <Table.Cell className="min-w-32 py-4 text-white/60">
+                          {getJobType(item)}
+                        </Table.Cell>
+
+                        <Table.Cell className="min-w-44 py-4 text-white/60">
+                          {getLocation(item)}
+                        </Table.Cell>
+
+                        <Table.Cell className="min-w-32 py-4 text-white/50">
+                          {formatDate(item?.createdAt)}
+                        </Table.Cell>
+
+                        <Table.Cell className="min-w-32 py-4">
+                          <StatusBadge status={item?.status} />
+                        </Table.Cell>
+
+                        <Table.Cell className="py-4">
+                          <Link
+                            href={`/dashboard/seeker/applications/${applicationId}`}
+                            className="inline-flex rounded-lg border border-blue-400/30 bg-blue-500/10 px-3 py-1.5 text-xs font-semibold text-blue-300 transition hover:bg-blue-500/20"
+                          >
+                            Details
+                          </Link>
+                        </Table.Cell>
+                      </Table.Row>
+                    );
+                  })}
+                </Table.Body>
+              </Table.Content>
+            </Table.ScrollContainer>
+
+            <Table.Footer className="border-t border-white/10 px-5 py-3 text-xs text-white/35">
+              Status updates made by recruiters will appear here.
+            </Table.Footer>
+          </Table>
+        </div>
+      ) : null}
+    </section>
+  );
+};
+
+const StatCard = ({ label, value }) => (
+  <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-5">
+    <p className="text-sm text-white/45">{label}</p>
+    <p className="mt-2 text-3xl font-bold tracking-tight text-white">
+      {value}
+    </p>
+  </div>
+);
+
+export default ApplicationsPage;

@@ -11,7 +11,6 @@ import {
   Bell,
   Briefcase,
   Envelope,
-  Gear,
   House,
   Magnifier,
   Person,
@@ -24,27 +23,47 @@ const navItemsByRole = {
   seeker: [
     { icon: House, href: "/dashboard/seeker", label: "Dashboard", exact: true },
     { icon: Magnifier, href: "/jobs", label: "Jobs" },
-    { icon: Briefcase, href: "/dashboard/seeker/applications", label: "Applications" },
-    { icon: Bell, href: "/dashboard/seeker/saved-jobs", label: "Saved Jobs" },
-    { icon: Person, href: "/dashboard/seeker/profile", label: "Profile" },
-    { icon: Gear, href: "/dashboard/seeker/settings", label: "Settings" },
+    {
+      icon: Briefcase,
+      href: "/dashboard/seeker/applications",
+      label: "Applications",
+    },
   ],
 
   recruiter: [
-    { icon: House, href: "/dashboard/recruiter", label: "Dashboard", exact: true },
+    {
+      icon: House,
+      href: "/dashboard/recruiter",
+      label: "Dashboard",
+      exact: true,
+    },
 
-    // 🔥 FIX 1 (added exact)
-    { icon: Briefcase, href: "/dashboard/recruiter/company", label: "My Company", exact: true },
+    {
+      icon: Briefcase,
+      href: "/dashboard/recruiter/company",
+      label: "My Company",
+      exact: true,
+    },
 
-    // 🔥 FIX 2 (added exact to prevent overlap)
-    { icon: Bell, href: "/dashboard/recruiter/jobs/new", label: "Post A Job", exact: true },
+    {
+      icon: Bell,
+      href: "/dashboard/recruiter/jobs/new",
+      label: "Post A Job",
+      exact: true,
+    },
 
-    // 🔥 FIX 3 (added exact to prevent overlap bug)
-    { icon: Magnifier, href: "/dashboard/recruiter/jobs", label: "Manage Jobs", exact: true },
+    {
+      icon: Magnifier,
+      href: "/dashboard/recruiter/jobs",
+      label: "Manage Jobs",
+      exact: true,
+    },
 
-    { icon: Envelope, href: "/dashboard/recruiter/applications", label: "Applications" },
-    { icon: Person, href: "/dashboard/recruiter/profile", label: "Profile" },
-    { icon: Gear, href: "/dashboard/recruiter/settings", label: "Settings" },
+    {
+      icon: Envelope,
+      href: "/dashboard/recruiter/applications",
+      label: "Applications",
+    },
   ],
 
   admin: [
@@ -53,7 +72,6 @@ const navItemsByRole = {
     { icon: Briefcase, href: "/dashboard/admin/companies", label: "Companies" },
     { icon: Bell, href: "/dashboard/admin/jobs", label: "Jobs" },
     { icon: Envelope, href: "/dashboard/admin/payments", label: "Payments" },
-    { icon: Gear, href: "/dashboard/admin/settings", label: "Settings" },
   ],
 };
 
@@ -130,7 +148,6 @@ function SidebarContent({ user, pathname, loading, onNavigate }) {
 
   return (
     <div className="flex h-full flex-col px-5 py-6">
-
       {/* LOGO */}
       <Link href="/" onClick={onNavigate}>
         <Image
@@ -143,7 +160,6 @@ function SidebarContent({ user, pathname, loading, onNavigate }) {
 
       {/* USER */}
       <div className="mt-8 flex items-center gap-3">
-
         {user?.image ? (
           <img
             src={user.image}
@@ -206,7 +222,6 @@ function SidebarContent({ user, pathname, loading, onNavigate }) {
           Logout
         </button>
       </div>
-
     </div>
   );
 }
