@@ -1,8 +1,16 @@
-import { requireRole } from "@/lib/core/session";
-
+import { getUserSession } from "@/lib/core/session";
+import { redirect } from "next/navigation";
 
 const AdminLayout = async ({ children }) => {
-    await requireRole("admin")
+  const user = await getUserSession();
+
+  if (!user) {
+    redirect("/auth/signin");
+  }
+
+  if (user?.role !== "admin") {
+    redirect("/unauthorized");
+  }
 
   return children;
 };
