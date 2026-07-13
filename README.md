@@ -1,137 +1,206 @@
-# Rolebix Client Side
+<div align="center">
 
-Rolebix is a modern SaaS-style job marketplace platform built for job seekers, recruiters, and platform admins. The client application provides the public website, authentication screens, pricing flow, job discovery experience, and role-based dashboard UI for managing hiring workflows.
+# Rolebix Client
 
-## Live Demo
+### A modern full-stack job marketplace for seekers, recruiters, and administrators.
 
-* Client: https://rolebix-client-side.vercel.app
-* Server: https://rolebix-server-side.vercel.app
+[![Live App](https://img.shields.io/badge/Live_App-Rolebix-7c3aed?style=for-the-badge)](https://rolebix-client-side.vercel.app)
+[![Next.js](https://img.shields.io/badge/Next.js-16-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/React-19-149eca?style=for-the-badge&logo=react)](https://react.dev/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-06b6d4?style=for-the-badge&logo=tailwindcss)](https://tailwindcss.com/)
 
-## Demo Admin Access
+**Frontend Repository:** https://github.com/Tahaimage8/Rolebix-client-side  
+**Backend Repository:** https://github.com/Tahaimage8/Rolebix-server-side  
+**Live Website:** https://rolebix-client-side.vercel.app
 
-For evaluation and testing only:
+</div>
 
-* Email: `admin@gmail.com`
-* Password: `admin@gmail.com`
+---
 
-Recruiter and seeker accounts can also be created directly from the registration page.
+## Overview
 
-> Note: These credentials are for demo/testing. Change or remove them before production deployment.
+Rolebix is a role-based career marketplace where job seekers can discover and track opportunities, recruiters can manage companies, jobs, and applicants, and administrators can monitor platform activity, moderate job listings, and review payment records.
 
-## Project Overview
+The application uses the Next.js App Router, Better Auth, MongoDB, Stripe, Tailwind CSS, HeroUI, Motion, and a separate Express API.
 
-Rolebix is designed as a full-featured job hunting portal where:
+## Core Features
 
-* Job seekers can browse jobs, create accounts, apply for jobs, and manage their career activity.
-* Recruiters can register companies, post jobs, and manage hiring-related workflows.
-* Admins can review companies, manage users, and supervise platform activity.
+### Public experience
 
-The current version focuses on the main public experience, authentication, pricing, job browsing with pagination, recruiter workflow foundations, and backend-connected data flow.
+- Responsive landing page with hero, feature, workflow, pricing, and CTA sections
+- Job discovery with search and filters
+- Job details pages
+- Company discovery
+- Pricing and subscription plans
+- Responsive navbar and footer
+- Dark, modern, mobile-friendly interface
 
-## Key Features
+### Authentication and account
 
-### Public Website
+- Email and password authentication with Better Auth
+- MongoDB-backed sessions
+- Role-based accounts
+- Protected dashboard routes
+- Editable `/profile` page
+- Profile details, skills, preferences, social links, resume URL, and open-to-work status
 
-* Modern landing page with hero section, stats, CTA, and product sections.
-* Public job browsing page with search, filters, company filter, and pagination.
-* Job cards with company, title, description, location, salary, job type, skills, experience, and details link.
-* Pricing page with seeker and recruiter plan sections.
-* Responsive navigation and footer.
+### Job seeker workspace
 
-### Authentication
+- Personalized seeker dashboard
+- Application statistics and recent activity
+- Latest job opportunities
+- Application history
+- Individual application details
+- Recruiter status tracking
+- Application timeline
+- Resume and cover-letter access
 
-* Email/password authentication using Better Auth.
-* Sign up and sign in pages.
-* Role selection during registration for seeker/recruiter onboarding.
-* Session-based protected dashboard flow.
-* Admin client plugin configured for role management workflows.
+### Recruiter workspace
 
-### Job Discovery
+- Recruiter dashboard
+- Company profile management
+- Job creation and management
+- Applicant list by company-owned jobs
+- Candidate search and filtering
+- Application status workflow:
+  - Applied
+  - Reviewing
+  - Shortlisted
+  - Interview
+  - Hired
+  - Rejected
 
-* Server-side job pagination.
-* Search by title, company, skill, category, type, location, and related fields.
-* Filters for category, job type, experience level, work mode, and company.
-* URL-based pagination and filtering for shareable job search states.
+### Admin workspace
 
-### Recruiter Foundation
+- Platform overview dashboard
+- User, job, company, application, and payment statistics
+- Job moderation and status control
+- Payment history and revenue summary
+- Recent user, job, and payment activity
+- Admin-only route protection
 
-* Recruiter dashboard route structure.
-* Recruiter company registration flow.
-* Recruiter job management foundation.
-* Company status support: pending, approved, rejected.
+### Payments
 
-### Admin Foundation
+- Stripe-based plan checkout
+- Seeker and recruiter plans
+- Subscription information stored in MongoDB
+- Admin payment-history view
+- Payment status, plan, currency, amount, and Stripe reference tracking
 
-* Admin credential available for demo review.
-* Admin-oriented company approval workflow supported through backend API.
-* User role management groundwork through Better Auth admin client.
+## Technology Stack
 
-### Subscription Foundation
+| Area | Technology |
+|---|---|
+| Framework | Next.js 16 |
+| UI runtime | React 19 |
+| Styling | Tailwind CSS 4 |
+| Components | HeroUI 3 |
+| Authentication | Better Auth |
+| Database access | MongoDB Node.js Driver |
+| Payments | Stripe |
+| Animation | Motion |
+| Icons | Gravity UI Icons and React Icons |
+| Notifications | React Toastify |
+| Deployment | Vercel |
 
-* Pricing plans for seekers and recruiters.
-* Stripe package integrated in the client.
-* Subscription save flow supported by the backend.
+## Project Structure
 
-## Tech Stack
-
-* Next.js
-* React
-* Tailwind CSS
-* HeroUI
-* React Icons
-* Better Auth
-* MongoDB
-* Stripe
-* React Toastify
-* Vercel
+```text
+src/
+├── app/
+│   ├── api/                     # Next.js API proxies and auth routes
+│   ├── auth/                    # Sign-in and registration
+│   ├── dashboard/
+│   │   ├── admin/               # Admin dashboard, jobs, payments
+│   │   ├── recruiter/           # Recruiter workspace
+│   │   └── seeker/              # Seeker workspace and applications
+│   ├── jobs/                    # Job listing and details
+│   ├── profile/                 # Editable user profile
+│   └── page.js                  # Public homepage
+├── components/
+│   ├── dashboard/
+│   ├── profile/
+│   └── ...
+├── lib/
+│   ├── api/                     # Server-side API helpers
+│   ├── core/                    # Session and fetch utilities
+│   └── auth.js                  # Better Auth configuration
+└── ...
+```
 
 ## Main Routes
 
-| Route                          | Description                             |
-| ------------------------------ | --------------------------------------- |
-| `/`                            | Public landing page                     |
-| `/jobs`                        | Browse jobs with filters and pagination |
-| `/jobs/:id`                    | Job details page                        |
-| `/pricing`                     | Pricing plans                           |
-| `/auth/register`               | User registration                       |
-| `/auth/signin`                 | User sign in                            |
-| `/dashboard`                   | Role-based dashboard layout             |
-| `/dashboard/recruiter`         | Recruiter dashboard                     |
-| `/dashboard/recruiter/company` | Recruiter company management            |
-| `/dashboard/recruiter/jobs`    | Recruiter job management                |
+| Route | Purpose |
+|---|---|
+| `/` | Homepage |
+| `/jobs` | Browse jobs |
+| `/jobs/[id]` | Job details |
+| `/companies` | Browse companies |
+| `/pricing` | Subscription plans |
+| `/auth/register` | Create account |
+| `/auth/signin` | Sign in |
+| `/profile` | View and edit personal profile |
+| `/dashboard/seeker` | Seeker dashboard |
+| `/dashboard/seeker/applications` | Seeker application history |
+| `/dashboard/seeker/applications/[id]` | Application details |
+| `/dashboard/recruiter` | Recruiter dashboard |
+| `/dashboard/recruiter/applications` | Recruiter applicant management |
+| `/dashboard/admin` | Admin dashboard |
+| `/dashboard/admin/jobs` | Admin job moderation |
+| `/dashboard/admin/payments` | Admin payment history |
 
-## Environment Variables
+## Getting Started
 
-Create a `.env.local` file in the client project root.
+### Prerequisites
 
-```env
-NEXT_PUBLIC_BASE_URI=https://rolebix-server-side.vercel.app
-BETTER_AUTH_SECRET=your_better_auth_secret
-BETTER_AUTH_URL=http://localhost:3000
-MONGODB_URI=your_mongodb_connection_string
-STRIPE_SECRET_KEY=your_stripe_secret_key
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key
-```
+- Node.js 20 or newer
+- npm
+- MongoDB database
+- Running Rolebix backend
+- Stripe account for payment testing
 
-For local development:
-
-```env
-NEXT_PUBLIC_BASE_URI=http://localhost:5000
-BETTER_AUTH_URL=http://localhost:3000
-```
-
-## Installation
+### Installation
 
 ```bash
 git clone https://github.com/Tahaimage8/Rolebix-client-side.git
 cd Rolebix-client-side
 npm install
+```
+
+### Environment Variables
+
+Create a `.env.local` file in the project root:
+
+```env
+NEXT_PUBLIC_BASE_URI=http://localhost:5000
+
+MONGODB_URI=your_mongodb_connection_string
+
+BETTER_AUTH_URL=http://localhost:3000
+BETTER_AUTH_SECRET=your_secure_random_secret
+
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key
+STRIPE_SECRET_KEY=your_stripe_secret_key
+```
+
+For production, use the deployed API URL:
+
+```env
+NEXT_PUBLIC_BASE_URI=https://rolebix-server-side.vercel.app
+BETTER_AUTH_URL=https://rolebix-client-side.vercel.app
+```
+
+Never commit `.env.local` or production secrets.
+
+### Run Locally
+
+```bash
 npm run dev
 ```
 
 Open:
 
-```txt
+```text
 http://localhost:3000
 ```
 
@@ -139,107 +208,69 @@ http://localhost:3000
 
 ```bash
 npm run dev
-```
-
-Runs the development server.
-
-```bash
 npm run build
-```
-
-Builds the project for production.
-
-```bash
 npm run start
-```
-
-Runs the production build.
-
-```bash
 npm run lint
 ```
 
-Runs linting.
+## Backend Integration
 
-## Current Completion Status
+The client communicates with the Rolebix Express API through:
 
-### Completed
+```env
+NEXT_PUBLIC_BASE_URI=http://localhost:5000
+```
 
-* Public landing page
-* Public jobs page
-* Job search and filtering
-* Jobs pagination
-* Pricing page
-* Authentication UI
-* Sign in and sign up flow
-* Recruiter dashboard foundation
-* Recruiter company flow foundation
-* Backend API integration
-* Toast notifications
-* Responsive UI foundation
-* Live Vercel deployment
+Server Components use authenticated server-side helpers, while browser updates such as profile editing and job-status moderation use protected Next.js proxy routes.
 
-### In Progress / Planned
+Backend repository:
 
-* Public companies page
-* Full seeker dashboard
-* Full admin dashboard
-* Admin user management polish
-* Admin jobs moderation
-* Admin payments dashboard
-* Saved jobs system
-* Resume upload
-* Application status tracking UI
-* Recruiter applicant management
-* Email notifications
-* Full billing and payment history
-* Production-grade access control hardening
+```text
+https://github.com/Tahaimage8/Rolebix-server-side
+```
 
-## Role Flow
+## Role Model
 
-### Seeker
-
-A seeker can register, browse jobs, view job details, and use the platform as a candidate. The future roadmap includes saved jobs, application tracking, resume upload, and billing dashboard.
-
-### Recruiter
-
-A recruiter can register a company and manage job-related workflows. The future roadmap includes applicant review, status management, and job analytics.
-
-### Admin
-
-An admin can review platform activity and is intended to manage users, company approvals, jobs, and payments. Demo admin credentials are provided for evaluation.
-
-## Project Requirement Coverage
-
-Rolebix currently covers the core foundation of the job marketplace:
-
-* Public job discovery
-* Role-based authentication foundation
-* Recruiter company workflow foundation
-* Pricing and subscription foundation
-* Server-backed job and company data
-* Server-side jobs pagination
-
-The remaining work mainly focuses on completing deeper dashboard workflows, saved jobs, billing history, applicant management, and admin analytics.
+| Role | Main capabilities |
+|---|---|
+| Seeker | Browse jobs, apply, track applications, edit profile |
+| Recruiter | Manage company, jobs, applicants, and hiring status |
+| Admin | View platform metrics, moderate jobs, inspect payments |
 
 ## Deployment
 
-The client is deployed on Vercel.
+The client is designed for deployment on Vercel.
 
-Production URL:
+1. Import the GitHub repository into Vercel.
+2. Add all required environment variables.
+3. Set the production backend URL in `NEXT_PUBLIC_BASE_URI`.
+4. Deploy the project.
+5. Add the production domain to the Better Auth trusted configuration when required.
 
-```txt
-https://rolebix-client-side.vercel.app
+## Development Notes
+
+- This project is under active development.
+- Use role-specific accounts when testing protected dashboards.
+- Keep the frontend and backend environment URLs synchronized.
+- Review every mutation route and CORS policy before a production launch.
+- Do not expose Stripe, Better Auth, or MongoDB secrets in client-side code.
+
+## Related Repository
+
+Rolebix server:
+
+```text
+https://github.com/Tahaimage8/Rolebix-server-side
 ```
 
-Make sure all required environment variables are configured in the Vercel project settings.
+## License
 
-## Repository
+This repository is currently maintained as a private learning and portfolio project. Add a project license before allowing external redistribution or commercial reuse.
 
-```txt
-https://github.com/Tahaimage8/Rolebix-client-side
-```
+---
 
-## Notes for Reviewers
+<div align="center">
 
-This project is actively being developed as a full-stack SaaS job marketplace. The current version demonstrates the main product direction, UI quality, authentication foundation, server-connected job browsing, pagination, pricing flow, and role-based dashboard structure.
+Built with Next.js, MongoDB, Better Auth, Stripe, and Tailwind CSS.
+
+</div>
