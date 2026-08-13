@@ -65,6 +65,7 @@ const Footer = () => {
         }}
       />
 
+
       <div className="relative mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
         <div className="grid gap-12 md:grid-cols-[1.4fr_2fr] lg:gap-20">
           {/* Brand Area */}
